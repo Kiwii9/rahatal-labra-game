@@ -1,17 +1,17 @@
 // ============================
-// Lobby: Team setup, color selection, and game start
+// Lobby: Team setup, color selection, host name for game title, and game start
 // ============================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import mascotImg from "@/assets/mascot.png";
+import GameTitle from "@/components/game/GameTitle";
 
 const Lobby = () => {
   const navigate = useNavigate();
   const [team1Name, setTeam1Name] = useState("الفريق الأول");
   const [team2Name, setTeam2Name] = useState("الفريق الثاني");
   const [team1Color, setTeam1Color] = useState<'terracotta' | 'blue'>('terracotta');
-  const [hostName, setHostName] = useState("رحّال");
+  const [hostName, setHostName] = useState("");
 
   const team2Color = team1Color === 'terracotta' ? 'blue' : 'terracotta';
 
@@ -22,7 +22,7 @@ const Lobby = () => {
       t2: team2Name,
       t1c: team1Color,
       t2c: team2Color,
-      host: hostName,
+      host: hostName || 'رحّال',
     });
     navigate(`/game?${params.toString()}`);
   };
@@ -34,38 +34,41 @@ const Lobby = () => {
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.5 }}
-        style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}
+        style={{ boxShadow: 'var(--shadow-stage)' }}
       >
-        <div className="text-center mb-8">
-          <img src={mascotImg} alt="رحّال" className="w-20 h-20 object-contain mx-auto mb-4" />
-          <h1 className="text-3xl font-tajawal font-[900] text-cream">إعداد اللعبة</h1>
+        {/* Live title preview */}
+        <div className="mb-8">
+          <GameTitle hostName={hostName || 'رحّال'} className="scale-75 origin-center" />
         </div>
 
-        {/* Host name */}
+        {/* Host name - this becomes the game title */}
         <div className="mb-6">
-          <label className="text-cream/70 text-sm font-tajawal block mb-1">اسم المضيف</label>
+          <label className="text-cream/70 text-sm font-tajawal block mb-1">
+            خلية الحروف مع ___
+          </label>
           <input
             value={hostName}
             onChange={(e) => setHostName(e.target.value)}
-            className="w-full bg-midnight/50 border border-cream/20 rounded-lg px-4 py-3 text-cream font-tajawal focus:outline-none focus:border-golden"
+            placeholder="أدخل اسمك هنا"
+            className="w-full bg-background/50 border border-cream/20 rounded-lg px-4 py-3 text-cream font-tajawal focus:outline-none focus:border-golden placeholder:text-cream/30"
           />
         </div>
 
         {/* Team 1 */}
         <div className="mb-6">
-          <label className="text-cream/70 text-sm font-tajawal block mb-1">اسم الفريق الأول (أعلى ↔ أسفل)</label>
+          <label className="text-cream/70 text-sm font-tajawal block mb-1">
+            اسم الفريق الأول (أعلى ↔ أسفل)
+          </label>
           <input
             value={team1Name}
             onChange={(e) => setTeam1Name(e.target.value)}
-            className="w-full bg-midnight/50 border border-cream/20 rounded-lg px-4 py-3 text-cream font-tajawal focus:outline-none focus:border-golden mb-3"
+            className="w-full bg-background/50 border border-cream/20 rounded-lg px-4 py-3 text-cream font-tajawal focus:outline-none focus:border-golden mb-3"
           />
           <div className="flex gap-3">
             <button
               onClick={() => setTeam1Color('terracotta')}
               className={`flex-1 py-2 rounded-lg font-tajawal font-bold text-sm transition-all ${
-                team1Color === 'terracotta'
-                  ? 'ring-2 ring-golden scale-105'
-                  : 'opacity-60'
+                team1Color === 'terracotta' ? 'ring-2 ring-golden scale-105' : 'opacity-60'
               }`}
               style={{ backgroundColor: '#E57A44', color: '#fff' }}
             >
@@ -74,9 +77,7 @@ const Lobby = () => {
             <button
               onClick={() => setTeam1Color('blue')}
               className={`flex-1 py-2 rounded-lg font-tajawal font-bold text-sm transition-all ${
-                team1Color === 'blue'
-                  ? 'ring-2 ring-golden scale-105'
-                  : 'opacity-60'
+                team1Color === 'blue' ? 'ring-2 ring-golden scale-105' : 'opacity-60'
               }`}
               style={{ backgroundColor: '#3B82F6', color: '#fff' }}
             >
@@ -87,19 +88,19 @@ const Lobby = () => {
 
         {/* Team 2 */}
         <div className="mb-8">
-          <label className="text-cream/70 text-sm font-tajawal block mb-1">اسم الفريق الثاني (يمين ↔ يسار)</label>
+          <label className="text-cream/70 text-sm font-tajawal block mb-1">
+            اسم الفريق الثاني (يمين ↔ يسار)
+          </label>
           <input
             value={team2Name}
             onChange={(e) => setTeam2Name(e.target.value)}
-            className="w-full bg-midnight/50 border border-cream/20 rounded-lg px-4 py-3 text-cream font-tajawal focus:outline-none focus:border-golden mb-3"
+            className="w-full bg-background/50 border border-cream/20 rounded-lg px-4 py-3 text-cream font-tajawal focus:outline-none focus:border-golden mb-3"
           />
-          <div className="flex items-center gap-2">
-            <div
-              className="flex-1 py-2 rounded-lg font-tajawal font-bold text-sm text-center ring-2 ring-golden"
-              style={{ backgroundColor: team2Color === 'terracotta' ? '#E57A44' : '#3B82F6', color: '#fff' }}
-            >
-              {team2Color === 'terracotta' ? '🟠 برتقالي' : '🔵 أزرق'} (تلقائي)
-            </div>
+          <div
+            className="py-2 rounded-lg font-tajawal font-bold text-sm text-center ring-1 ring-cream/20"
+            style={{ backgroundColor: team2Color === 'terracotta' ? '#E57A44' : '#3B82F6', color: '#fff' }}
+          >
+            {team2Color === 'terracotta' ? '🟠 برتقالي' : '🔵 أزرق'} (تلقائي)
           </div>
         </div>
 

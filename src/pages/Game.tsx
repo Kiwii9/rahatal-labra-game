@@ -1,7 +1,7 @@
 // ============================
-// Game: Live game stage with hex board, scores, and question flow
+// Game: Live game stage with hex board, scores, question flow, golden questions, and sound
 // ============================
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import HexBoard from "@/components/game/HexBoard";
@@ -10,6 +10,7 @@ import QuestionModal from "@/components/game/QuestionModal";
 import GameTitle from "@/components/game/GameTitle";
 import WinnerOverlay from "@/components/game/WinnerOverlay";
 import mascotImg from "@/assets/mascot.png";
+import { useSoundEffects } from "@/hooks/useSoundEffects";
 import {
   createInitialGameState,
   checkWin,
@@ -21,6 +22,7 @@ import {
 const Game = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const sfx = useSoundEffects();
 
   const isHost = searchParams.get("role") === "host";
   const team1Name = searchParams.get("t1") || "الفريق الأول";
@@ -37,42 +39,59 @@ const Game = () => {
     team2Color,
   }));
 
-  // Question modal state
   const [selectedCell, setSelectedCell] = useState<HexCell | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<{ question: string; answer: string; category: string } | null>(null);
   const [answerRevealed, setAnswerRevealed] = useState(false);
 
   const currentTurnColor = gameState.currentTurn === 'team1' ? team1Color : team2Color;
 
-  // Handle hex click - opens question modal
+  // Handle hex click
   const handleHexClick = useCallback((cell: HexCell) => {
     if (!isHost || cell.status !== 'unclaimed' || gameState.winner) return;
+
+    sfx.playHexSelect();
+
+    // Golden question = free point, no question needed
+    if (cell.isGolden) {
+      sfx.playGolden();
+      setSelectedCell(cell);
+      setCurrentQuestion({
+        question: '⭐ سؤال ذهبي! نقطة مجانية لأحد الفريقين ⭐',
+        answer: 'اختر الفريق الذي يحصل على النقطة',
+        category: 'سؤال ذهبي',
+      });
+      setAnswerRevealed(true);
+      return;
+    }
+
     const q = getQuestionForLetter(cell.letter);
     setSelectedCell(cell);
     setCurrentQuestion(q);
     setAnswerRevealed(false);
-  }, [isHost, gameState.winner]);
+
+    setTimeout(() => sfx.playQuestionReveal(), 300);
+  }, [isHost, gameState.winner, sfx]);
 
   // Award hex to a team
   const awardHex = useCallback((team: 'team1' | 'team2') => {
     if (!selectedCell) return;
+    sfx.playCorrect();
 
     setGameState(prev => {
       const newBoard = prev.board.map(c =>
         c.index === selectedCell.index ? { ...c, status: team } : c
       );
 
-      // Check for win
       const winPath = checkWin(newBoard, team);
       const hasWinner = winPath !== null;
 
-      // Mark winning path cells
       const finalBoard = hasWinner
-        ? newBoard.map(c => ({
-          ...c,
-          isWinningPath: winPath!.includes(c.index),
-        }))
+        ? newBoard.map(c => ({ ...c, isWinningPath: winPath!.includes(c.index) }))
         : newBoard;
+
+      if (hasWinner) {
+        setTimeout(() => sfx.playWin(), 500);
+      }
 
       return {
         ...prev,
@@ -87,17 +106,18 @@ const Game = () => {
 
     setSelectedCell(null);
     setCurrentQuestion(null);
-  }, [selectedCell]);
+  }, [selectedCell, sfx]);
 
-  // Handle wrong answer - just close modal, no hex claimed
+  // Wrong answer
   const handleWrong = useCallback(() => {
+    sfx.playWrong();
     setGameState(prev => ({
       ...prev,
       currentTurn: prev.currentTurn === 'team1' ? 'team2' : 'team1',
     }));
     setSelectedCell(null);
     setCurrentQuestion(null);
-  }, []);
+  }, [sfx]);
 
   // Play again
   const playAgain = useCallback(() => {
@@ -115,19 +135,18 @@ const Game = () => {
   return (
     <div className="min-h-screen stage-bg sweep-light flex flex-col">
       {/* Header */}
-      <div className="pt-6 pb-2 px-4 relative">
+      <div className="pt-4 pb-2 px-4 relative">
         <GameTitle hostName={hostName} />
-        {/* Mascot watermark */}
+        {/* Mascot watermark - subtle corner */}
         <img
           src={mascotImg}
           alt=""
-          className="absolute top-4 left-4 w-12 h-12 object-contain opacity-30"
+          className="absolute top-3 left-3 w-10 h-10 object-contain opacity-20 pointer-events-none"
         />
       </div>
 
       {/* Game area */}
-      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 px-4 py-6">
-        {/* Team 1 Score */}
+      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 px-4 py-4">
         <ScorePanel
           teamName={team1Name}
           score={gameState.team1Score}
@@ -135,13 +154,11 @@ const Game = () => {
           isActive={gameState.currentTurn === 'team1'}
         />
 
-        {/* Hex Board */}
         <div className="relative">
-          {/* Mascot watermark behind board */}
           <img
             src={mascotImg}
             alt=""
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-40 h-40 object-contain opacity-[0.04] pointer-events-none"
+            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 object-contain opacity-[0.03] pointer-events-none"
           />
           <HexBoard
             board={gameState.board}
@@ -153,7 +170,6 @@ const Game = () => {
           />
         </div>
 
-        {/* Team 2 Score */}
         <ScorePanel
           teamName={team2Name}
           score={gameState.team2Score}
@@ -162,12 +178,10 @@ const Game = () => {
         />
       </div>
 
-      {/* Turn indicator footer */}
+      {/* Turn indicator */}
       <motion.div
-        className="text-center py-4 font-tajawal font-bold text-lg"
-        style={{
-          color: currentTurnColor === 'terracotta' ? '#E57A44' : '#3B82F6',
-        }}
+        className="text-center py-3 font-tajawal font-bold text-lg"
+        style={{ color: currentTurnColor === 'terracotta' ? '#E57A44' : '#3B82F6' }}
         key={gameState.currentTurn}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -175,7 +189,7 @@ const Game = () => {
         {!gameState.winner && (
           <>
             الدور الآن: {currentTeamName}
-            {!isHost && <span className="text-cream/50 text-sm mr-2"> (في انتظار المضيف...)</span>}
+            {!isHost && <span className="text-cream/40 text-sm mr-2"> (في انتظار المضيف...)</span>}
           </>
         )}
       </motion.div>

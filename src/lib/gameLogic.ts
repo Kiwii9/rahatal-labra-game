@@ -1,6 +1,8 @@
 // ============================
-// Game Logic: Board generation, hex adjacency, and BFS win detection
+// Game Logic: Board generation, hex adjacency, BFS win detection, golden question
 // ============================
+import { getQuestionForLetter } from './questionsDB';
+export { getQuestionForLetter };
 
 export type CellStatus = 'unclaimed' | 'team1' | 'team2';
 
@@ -11,6 +13,7 @@ export interface HexCell {
   letter: string;
   status: CellStatus;
   isWinningPath?: boolean;
+  isGolden?: boolean; // Golden question - free point
 }
 
 export interface GameState {
@@ -26,85 +29,24 @@ export interface GameState {
   team2Color: 'terracotta' | 'blue';
 }
 
-// Arabic letters commonly used in trivia
+// Arabic letters used in the game
 export const ARABIC_LETTERS = [
   'أ', 'ب', 'ت', 'ث', 'ج', 'ح', 'خ', 'د', 'ذ', 'ر',
   'ز', 'س', 'ش', 'ص', 'ض', 'ط', 'ظ', 'ع', 'غ', 'ف',
-  'ق', 'ك', 'ل', 'م', 'ن', 'ه', 'و', 'ي',
+  'ق', 'ك', 'ل', 'م', 'ن', 'هـ', 'و', 'ي',
 ];
 
-// Sample questions database (letter -> questions)
-export const SAMPLE_QUESTIONS: Record<string, { question: string; answer: string; category: string }[]> = {
-  'أ': [
-    { question: 'ما هو أطول نهر في العالم؟', answer: 'أمازون / النيل', category: 'جغرافيا' },
-    { question: 'ما هي عاصمة اليابان؟', answer: 'أوساكا لا، طوكيو', category: 'جغرافيا' },
-  ],
-  'ب': [
-    { question: 'ما هو أكبر محيط في العالم؟', answer: 'بحر الهادئ (المحيط الهادئ)', category: 'جغرافيا' },
-  ],
-  'ت': [
-    { question: 'ما هو الحيوان الأسرع في العالم؟', answer: 'تشيتا (الفهد)', category: 'حيوانات' },
-  ],
-  'ج': [
-    { question: 'ما هو أكبر كوكب في المجموعة الشمسية؟', answer: 'جوبيتر (المشتري)', category: 'فضاء' },
-  ],
-  'ح': [
-    { question: 'ما هو العنصر الكيميائي الأكثر وفرة في الكون؟', answer: 'هيدروجين', category: 'علوم' },
-  ],
-  'خ': [
-    { question: 'كم عدد أرجل العنكبوت؟', answer: 'خمسة... لا ثمانية!', category: 'حيوانات' },
-  ],
-  'د': [
-    { question: 'ما هي أقدم حضارة في التاريخ؟', answer: 'دلمون أو سومر', category: 'تاريخ' },
-  ],
-  'ر': [
-    { question: 'ما هي عاصمة إيطاليا؟', answer: 'روما', category: 'جغرافيا' },
-  ],
-  'س': [
-    { question: 'ما هو أكبر صحراء في العالم؟', answer: 'صحراء الصحراء الكبرى', category: 'جغرافيا' },
-  ],
-  'ش': [
-    { question: 'ما هو الشهر الميلادي الثاني؟', answer: 'شباط (فبراير)', category: 'عام' },
-  ],
-  'ع': [
-    { question: 'كم عدد قارات العالم؟', answer: 'عدد ٧ قارات', category: 'جغرافيا' },
-  ],
-  'غ': [
-    { question: 'ما هو الغاز الذي نتنفسه؟', answer: 'غاز الأكسجين', category: 'علوم' },
-  ],
-  'ف': [
-    { question: 'ما هي أكبر دولة في أفريقيا مساحة؟', answer: 'فرنسا لا، الجزائر', category: 'جغرافيا' },
-  ],
-  'ق': [
-    { question: 'ما هو أعلى جبل في العالم؟', answer: 'قمة إيفرست', category: 'جغرافيا' },
-  ],
-  'ك': [
-    { question: 'ما هو أكبر كوكب صخري في المجموعة الشمسية؟', answer: 'كوكب الأرض', category: 'فضاء' },
-  ],
-  'ل': [
-    { question: 'ما هي اللغة الأكثر تحدثاً في العالم؟', answer: 'لغة الماندرين الصينية', category: 'ثقافة' },
-  ],
-  'م': [
-    { question: 'ما هو أصغر دولة في العالم؟', answer: 'مدينة الفاتيكان', category: 'جغرافيا' },
-  ],
-  'ن': [
-    { question: 'ما هو المعدن الأغلى في العالم؟', answer: 'نيوترينو... لا البلاتين أو الذهب', category: 'علوم' },
-  ],
-  'هـ': [
-    { question: 'ما هي عاصمة فنلندا؟', answer: 'هلسنكي', category: 'جغرافيا' },
-  ],
-  'و': [
-    { question: 'ما هي أكبر جزيرة في العالم؟', answer: 'وجرينلاند (غرينلاند)', category: 'جغرافيا' },
-  ],
-  'ي': [
-    { question: 'ما هو البحر الذي يفصل بين أوروبا وأفريقيا؟', answer: 'يُعرف بالبحر الأبيض المتوسط', category: 'جغرافيا' },
-  ],
-};
-
-/** Generate a random 5x5 hex board */
+/** Generate a random 5x5 hex board with 1-2 golden cells */
 export function generateBoard(): HexCell[] {
   const board: HexCell[] = [];
   const shuffled = [...ARABIC_LETTERS].sort(() => Math.random() - 0.5);
+
+  // Pick 1-2 random indices for golden questions
+  const goldenCount = Math.random() > 0.5 ? 2 : 1;
+  const goldenIndices = new Set<number>();
+  while (goldenIndices.size < goldenCount) {
+    goldenIndices.add(Math.floor(Math.random() * 25));
+  }
 
   for (let row = 0; row < 5; row++) {
     for (let col = 0; col < 5; col++) {
@@ -115,6 +57,7 @@ export function generateBoard(): HexCell[] {
         col,
         letter: shuffled[index % shuffled.length],
         status: 'unclaimed',
+        isGolden: goldenIndices.has(index),
       });
     }
   }
@@ -126,7 +69,6 @@ export function getHexNeighbors(row: number, col: number, gridSize: number = 5):
   const neighbors: [number, number][] = [];
   const isOddRow = row % 2 === 1;
 
-  // Hex neighbor offsets for odd-r offset coordinates
   const directions = isOddRow
     ? [[-1, 0], [-1, 1], [0, -1], [0, 1], [1, 0], [1, 1]]
     : [[-1, -1], [-1, 0], [0, -1], [0, 1], [1, -1], [1, 0]];
@@ -143,22 +85,20 @@ export function getHexNeighbors(row: number, col: number, gridSize: number = 5):
 
 /**
  * BFS win detection.
- * Team 1 wins by connecting top row to bottom row.
- * Team 2 wins by connecting left column to right column.
+ * Team 1 wins by connecting top to bottom.
+ * Team 2 wins by connecting left to right.
  */
 export function checkWin(board: HexCell[], team: 'team1' | 'team2'): number[] | null {
   const gridSize = 5;
   const teamCells = board.filter(c => c.status === team);
   if (teamCells.length < gridSize) return null;
 
-  // Starting cells: Team1 = top row, Team2 = left col
   const startCells = teamCells.filter(c =>
     team === 'team1' ? c.row === 0 : c.col === 0
   );
 
   if (startCells.length === 0) return null;
 
-  // BFS from each start cell
   const visited = new Set<number>();
   const parent = new Map<number, number>();
   const queue: HexCell[] = [];
@@ -171,11 +111,8 @@ export function checkWin(board: HexCell[], team: 'team1' | 'team2'): number[] | 
 
   while (queue.length > 0) {
     const current = queue.shift()!;
-
-    // Check if we reached the opposite side
     const reached = team === 'team1' ? current.row === gridSize - 1 : current.col === gridSize - 1;
     if (reached) {
-      // Reconstruct path
       const path: number[] = [];
       let idx = current.index;
       while (idx !== -1) {
@@ -198,20 +135,6 @@ export function checkWin(board: HexCell[], team: 'team1' | 'team2'): number[] | 
   }
 
   return null;
-}
-
-/** Get a random question for a given letter */
-export function getQuestionForLetter(letter: string): { question: string; answer: string; category: string } | null {
-  const questions = SAMPLE_QUESTIONS[letter];
-  if (!questions || questions.length === 0) {
-    // Fallback generic question
-    return {
-      question: `سؤال يبدأ جوابه بحرف "${letter}" - ما هو؟`,
-      answer: `الجواب يبدأ بحرف ${letter}`,
-      category: 'عام',
-    };
-  }
-  return questions[Math.floor(Math.random() * questions.length)];
 }
 
 /** Create initial game state */
