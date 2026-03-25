@@ -1,5 +1,5 @@
 // ============================
-// Index: Main Menu - cinematic landing page
+// Index: Main Menu - cinematic landing page with host name input
 // ============================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,39 +13,29 @@ const Index = () => {
   const [showJoin, setShowJoin] = useState(false);
 
   return (
-    <div className="min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #03222F 0%, #1B5967 50%, #03222F 100%)' }}>
+    <div className="min-h-screen flex flex-col stage-bg sweep-light">
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative sweep-light">
-        {/* Background decorative elements */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative">
+        {/* Subtle background accents */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <div className="absolute top-20 right-10 w-40 h-40 rounded-full opacity-[0.03]"
-            style={{ background: 'radial-gradient(circle, #E57A44, transparent)' }} />
-          <div className="absolute bottom-20 left-10 w-60 h-60 rounded-full opacity-[0.03]"
-            style={{ background: 'radial-gradient(circle, #3B82F6, transparent)' }} />
+          <div className="absolute top-20 right-10 w-40 h-40 rounded-full opacity-[0.04]"
+            style={{ background: 'radial-gradient(circle, hsl(var(--team-terracotta)), transparent)' }} />
+          <div className="absolute bottom-20 left-10 w-60 h-60 rounded-full opacity-[0.04]"
+            style={{ background: 'radial-gradient(circle, hsl(var(--team-blue)), transparent)' }} />
         </div>
-
-        {/* Mascot */}
-        <motion.img
-          src={mascotImg}
-          alt="رحّال"
-          className="w-32 h-32 md:w-44 md:h-44 object-contain mb-6 drop-shadow-2xl"
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
-        />
 
         {/* Title */}
         <motion.div
           className="text-center mb-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3, duration: 0.8 }}
+          transition={{ delay: 0.2, duration: 0.8 }}
         >
           <h1 className="text-5xl md:text-7xl font-tajawal font-[900] leading-tight">
             <span className="text-cream" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>خلية </span>
             <span className="text-golden" style={{ textShadow: '0 0 30px rgba(250,204,21,0.3)' }}>الحروف</span>
           </h1>
-          <p className="text-cream/70 text-lg md:text-xl font-tajawal mt-3">
+          <p className="text-cream/60 text-lg md:text-xl font-tajawal mt-3">
             لعبة المعرفة والتحدي الجماعي
           </p>
         </motion.div>
@@ -55,7 +45,7 @@ const Index = () => {
           className="flex flex-col gap-4 w-full max-w-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
         >
           {/* Host login */}
           <motion.button
@@ -91,7 +81,7 @@ const Index = () => {
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="000000"
-                  className="flex-1 bg-midnight/50 border border-cream/20 rounded-lg px-4 py-3 text-cream text-center text-2xl font-tajawal tracking-[0.3em] placeholder:text-cream/30 focus:outline-none focus:border-golden"
+                  className="flex-1 bg-background/50 border border-cream/20 rounded-lg px-4 py-3 text-cream text-center text-2xl font-tajawal tracking-[0.3em] placeholder:text-cream/30 focus:outline-none focus:border-golden"
                   dir="ltr"
                 />
                 <motion.button
@@ -106,6 +96,14 @@ const Index = () => {
               </div>
             </motion.div>
           )}
+
+          {/* About us link */}
+          <motion.button
+            className="text-cream/40 hover:text-cream/70 text-sm font-tajawal transition-colors mt-2"
+            onClick={() => navigate("/about")}
+          >
+            من نحن؟
+          </motion.button>
         </motion.div>
       </div>
 
