@@ -1,14 +1,16 @@
 // ============================
-// GameTitle: 3D CSS text-shadow title, no random numbers
+// GameTitle: 3D CSS text-shadow title, editable via contentEditable
 // ============================
 import { motion } from "framer-motion";
 
 interface GameTitleProps {
   hostName?: string;
   className?: string;
+  editable?: boolean;
+  onHostNameChange?: (name: string) => void;
 }
 
-const GameTitle = ({ hostName = "رحّال", className = "" }: GameTitleProps) => {
+const GameTitle = ({ hostName = "رحّال", className = "", editable = false, onHostNameChange }: GameTitleProps) => {
   return (
     <motion.div
       className={`text-center select-none ${className}`}
@@ -30,17 +32,30 @@ const GameTitle = ({ hostName = "رحّال", className = "" }: GameTitleProps) 
         }}
       >
         <span style={{ color: 'hsl(var(--cream))' }}>خلية </span>
-        <span style={{ color: 'hsl(var(--golden))' }}>الحروف</span>
+        <span style={{ color: '#f28b44' }}>الحروف</span>
       </h1>
       <div
-        className="text-xl md:text-2xl lg:text-3xl mt-1 font-tajawal font-bold"
-        style={{
-          textShadow: '0 2px 8px rgba(0,0,0,0.4)',
-        }}
+        className="text-lg md:text-2xl lg:text-3xl mt-1 font-tajawal font-bold"
+        style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}
       >
-        <span style={{ color: 'hsl(var(--accent))' }}>مع </span>
-        <span style={{ color: 'hsl(var(--primary))' }}>{hostName}</span>
+        <span style={{ color: 'hsl(var(--cream))' }}>مع </span>
+        {editable ? (
+          <span
+            contentEditable
+            suppressContentEditableWarning
+            className="outline-none border-b-2 border-dashed px-2 focus:border-primary"
+            style={{ color: '#f28b44', borderColor: 'rgba(242,139,68,0.4)' }}
+            onBlur={(e) => onHostNameChange?.(e.currentTarget.textContent || 'رحّال')}
+          >
+            {hostName}
+          </span>
+        ) : (
+          <span style={{ color: '#f28b44' }}>{hostName}</span>
+        )}
       </div>
+      <p className="text-cream/40 text-sm md:text-base mt-2 font-tajawal">
+        تحدي المعرفة والسرعة
+      </p>
     </motion.div>
   );
 };

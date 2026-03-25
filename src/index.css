@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    /* Rahaal Arabian Game Show Palette */
-    --background: 197 88% 10%; /* #03222F Midnight Blue */
+    /* Rahaal Brand Palette */
+    --background: 195 42% 18%; /* #1a3644 Deep Dark Teal */
     --foreground: 40 100% 95%; /* #FFF8E7 Cream Off-White */
 
     --card: 192 58% 25%; /* #1B5967 Deep Teal */
@@ -16,7 +16,7 @@
     --popover: 194 62% 22%; /* #155463 Ocean Teal */
     --popover-foreground: 40 100% 95%;
 
-    --primary: 20 76% 58%; /* #E57A44 Terracotta */
+    --primary: 25 87% 61%; /* #f28b44 Vibrant Orange */
     --primary-foreground: 0 0% 100%;
 
     --secondary: 28 33% 39%; /* #8B4513 Leather Brown */
@@ -25,7 +25,7 @@
     --muted: 30 52% 83%; /* #F5E5D3 Sandy Beige */
     --muted-foreground: 197 88% 10%;
 
-    --accent: 217 92% 60%; /* #3B82F6 Vibrant Blue */
+    --accent: 222 78% 60%; /* #4a80e8 Electric Blue */
     --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
@@ -38,12 +38,12 @@
     --radius: 0.75rem;
 
     /* Game-specific tokens */
-    --team-terracotta: 20 76% 58%;
-    --team-blue: 217 92% 60%;
+    --team-terracotta: 25 87% 61%;
+    --team-blue: 222 78% 60%;
     --golden: 48 96% 53%; /* #FACC15 Golden Yellow */
     --hex-unclaimed: 192 58% 25%;
     --hex-hover-glow: 0 0% 100% / 0.15;
-    --midnight: 197 88% 10%;
+    --midnight: 195 42% 18%;
     --cream: 40 100% 95%;
     --sandy: 30 52% 83%;
     --leather: 28 33% 39%;
