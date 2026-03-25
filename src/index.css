@@ -6,8 +6,8 @@
 
 @layer base {
   :root {
-    /* Rahaal Arabian Game Show Palette */
-    --background: 197 88% 10%; /* #03222F Midnight Blue */
+    /* Rahaal Brand Palette */
+    --background: 195 42% 18%; /* #1a3644 Deep Dark Teal */
     --foreground: 40 100% 95%; /* #FFF8E7 Cream Off-White */
 
     --card: 192 58% 25%; /* #1B5967 Deep Teal */
