@@ -38,8 +38,8 @@
     --radius: 0.75rem;
 
     /* Game-specific tokens */
-    --team-terracotta: 20 76% 58%;
-    --team-blue: 217 92% 60%;
+    --team-terracotta: 25 87% 61%;
+    --team-blue: 222 78% 60%;
     --golden: 48 96% 53%; /* #FACC15 Golden Yellow */
     --hex-unclaimed: 192 58% 25%;
     --hex-hover-glow: 0 0% 100% / 0.15;
