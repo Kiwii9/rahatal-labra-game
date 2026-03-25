@@ -1,5 +1,5 @@
 // ============================
-// HexBoard: 5x5 interlocking honeycomb grid with team-colored border rows
+// HexBoard: 5x5 hex grid with team-colored border rows, no floating artifacts
 // ============================
 import { motion } from "framer-motion";
 import type { HexCell as HexCellType } from "@/lib/gameLogic";
@@ -13,110 +13,55 @@ interface HexBoardProps {
   disabled?: boolean;
 }
 
-// Color constants
 const COLORS = {
-  terracotta: '#E57A44',
-  blue: '#3B82F6',
-  unclaimed: '#1B5967',
-  golden: '#FACC15',
+  terracotta: 'hsl(20 76% 58%)',
+  blue: 'hsl(217 92% 60%)',
+  unclaimed: 'hsl(192 58% 25%)',
+  golden: 'hsl(48 96% 53%)',
 } as const;
 
 const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disabled }: HexBoardProps) => {
-  const getTeamActualColor = (status: 'team1' | 'team2') => {
-    const color = status === 'team1' ? team1Color : team2Color;
-    return COLORS[color];
-  };
+  const getTeamColor = (status: 'team1' | 'team2') =>
+    COLORS[status === 'team1' ? team1Color : team2Color];
 
-  const getHoverShadow = () => {
-    const color = currentTurn === 'team1' ? COLORS[team1Color] : COLORS[team2Color];
-    return `0 0 20px ${color}99, inset 0 0 10px ${color}33`;
-  };
+  const currentColor = COLORS[currentTurn === 'team1' ? team1Color : team2Color];
 
-  // Cell dimensions
   const cellW = 88;
   const cellH = 98;
   const rowOffset = cellW * 0.52;
-
-  // Border hex dimensions (smaller)
   const borderW = 44;
   const borderH = 49;
 
   const team1Hex = COLORS[team1Color];
   const team2Hex = COLORS[team2Color];
 
-  // Calculate board dimensions
   const boardW = 5 * cellW + rowOffset + 20;
   const boardH = 5 * cellH * 0.76 + 40;
 
-  // Render team-colored border hexagons
   const renderBorderHexes = () => {
     const hexes: JSX.Element[] = [];
 
-    // Team 1 (top-bottom): row of hexes above and below the board
+    // Team 1 (top-bottom): rows of small hexes
     for (let col = 0; col < 6; col++) {
-      // Top border
       hexes.push(
-        <div
-          key={`t1-top-${col}`}
-          className="hex-cell absolute"
-          style={{
-            width: borderW,
-            height: borderH,
-            left: col * (borderW * 0.88) + 35,
-            top: -borderH * 0.5 - 4,
-            backgroundColor: team1Hex,
-            opacity: 0.7,
-          }}
-        />
+        <div key={`t1-top-${col}`} className="hex-cell absolute"
+          style={{ width: borderW, height: borderH, left: col * (borderW * 0.88) + 35, top: -borderH * 0.5 - 4, backgroundColor: team1Hex, opacity: 0.6 }} />
       );
-      // Bottom border
       hexes.push(
-        <div
-          key={`t1-bot-${col}`}
-          className="hex-cell absolute"
-          style={{
-            width: borderW,
-            height: borderH,
-            left: col * (borderW * 0.88) + 58,
-            top: boardH + borderH * 0.04,
-            backgroundColor: team1Hex,
-            opacity: 0.7,
-          }}
-        />
+        <div key={`t1-bot-${col}`} className="hex-cell absolute"
+          style={{ width: borderW, height: borderH, left: col * (borderW * 0.88) + 58, top: boardH + borderH * 0.04, backgroundColor: team1Hex, opacity: 0.6 }} />
       );
     }
 
-    // Team 2 (left-right): column of hexes on left and right sides
+    // Team 2 (left-right): columns of small hexes
     for (let row = 0; row < 6; row++) {
-      // Left border
       hexes.push(
-        <div
-          key={`t2-left-${row}`}
-          className="hex-cell absolute"
-          style={{
-            width: borderW,
-            height: borderH,
-            left: -borderW * 0.5 - 4,
-            top: row * (borderH * 0.72) + 10,
-            backgroundColor: team2Hex,
-            opacity: 0.7,
-          }}
-        />
+        <div key={`t2-left-${row}`} className="hex-cell absolute"
+          style={{ width: borderW, height: borderH, left: -borderW * 0.5 - 4, top: row * (borderH * 0.72) + 10, backgroundColor: team2Hex, opacity: 0.6 }} />
       );
-      // Right border
       hexes.push(
-        <div
-          key={`t2-right-${row}`}
-          className="hex-cell absolute"
-          style={{
-            width: borderW,
-            height: borderH,
-            left: boardW - borderW * 0.35,
-            top: row * (borderH * 0.72) + 10,
-            backgroundColor: team2Hex,
-            opacity: 0.7,
-          }}
-        />
+        <div key={`t2-right-${row}`} className="hex-cell absolute"
+          style={{ width: borderW, height: borderH, left: boardW - borderW * 0.35, top: row * (borderH * 0.72) + 10, backgroundColor: team2Hex, opacity: 0.6 }} />
       );
     }
 
@@ -125,28 +70,8 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
 
   return (
     <div className="relative mx-auto" style={{ width: boardW, height: boardH, padding: '20px' }}>
-      {/* Border hexagons for team indicators */}
       {renderBorderHexes()}
 
-      {/* Direction labels */}
-      <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-xs font-bold tracking-wider font-tajawal"
-        style={{ color: team1Hex }}>
-        ▼ {board.length > 0 ? '' : ''} ▼
-      </div>
-      <div className="absolute -bottom-12 left-1/2 -translate-x-1/2 text-xs font-bold tracking-wider font-tajawal"
-        style={{ color: team1Hex }}>
-        ▲ ▲
-      </div>
-      <div className="absolute top-1/2 -translate-y-1/2 -right-14 text-xs font-bold font-tajawal"
-        style={{ color: team2Hex, writingMode: 'vertical-rl' }}>
-        ◄
-      </div>
-      <div className="absolute top-1/2 -translate-y-1/2 -left-14 text-xs font-bold font-tajawal"
-        style={{ color: team2Hex, writingMode: 'vertical-rl' }}>
-        ►
-      </div>
-
-      {/* Main game cells */}
       {board.map((cell, i) => {
         const isOddRow = cell.row % 2 === 1;
         const x = cell.col * cellW + (isOddRow ? rowOffset : 0) + 10;
@@ -154,10 +79,8 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
 
         const isClaimed = cell.status !== 'unclaimed';
         const bgColor = isClaimed
-          ? getTeamActualColor(cell.status as 'team1' | 'team2')
-          : cell.isGolden
-            ? COLORS.golden
-            : COLORS.unclaimed;
+          ? getTeamColor(cell.status as 'team1' | 'team2')
+          : cell.isGolden ? COLORS.golden : COLORS.unclaimed;
 
         const isGoldenUnclaimed = cell.isGolden && !isClaimed;
 
@@ -191,13 +114,12 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
             }}
             whileHover={
               !isClaimed && !disabled
-                ? { scale: 1.1, boxShadow: getHoverShadow(), transition: { duration: 0.2 } }
+                ? { scale: 1.1, boxShadow: `0 0 20px ${currentColor}99, inset 0 0 10px ${currentColor}33`, transition: { duration: 0.2 } }
                 : undefined
             }
             whileTap={!isClaimed && !disabled ? { scale: 0.95 } : undefined}
             onClick={() => !disabled && !isClaimed && onHexClick(cell)}
           >
-            {/* Golden star indicator */}
             {isGoldenUnclaimed && (
               <motion.span
                 className="absolute -top-1 -right-1 text-xs"
@@ -210,10 +132,8 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
             <span
               className="text-2xl md:text-3xl font-tajawal font-[900] z-10 pointer-events-none"
               style={{
-                color: isGoldenUnclaimed ? '#03222F' : isClaimed ? '#FEFEFE' : '#FFF8E7',
-                textShadow: isClaimed
-                  ? '0 1px 3px rgba(0,0,0,0.4)'
-                  : '0 1px 2px rgba(0,0,0,0.2)',
+                color: isGoldenUnclaimed ? 'hsl(var(--midnight))' : isClaimed ? '#FEFEFE' : 'hsl(var(--cream))',
+                textShadow: isClaimed ? '0 1px 3px rgba(0,0,0,0.4)' : '0 1px 2px rgba(0,0,0,0.2)',
               }}
             >
               {cell.letter}
