@@ -1,5 +1,5 @@
 // ============================
-// Game: Live game stage with hex board, scores, question flow, golden questions, and sound
+// Game: Live game stage - cleaned up, no floating artifacts
 // ============================
 import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -33,10 +33,7 @@ const Game = () => {
 
   const [gameState, setGameState] = useState<GameState>(() => ({
     ...createInitialGameState(),
-    team1Name,
-    team2Name,
-    team1Color,
-    team2Color,
+    team1Name, team2Name, team1Color, team2Color,
   }));
 
   const [selectedCell, setSelectedCell] = useState<HexCell | null>(null);
@@ -45,13 +42,10 @@ const Game = () => {
 
   const currentTurnColor = gameState.currentTurn === 'team1' ? team1Color : team2Color;
 
-  // Handle hex click
   const handleHexClick = useCallback((cell: HexCell) => {
     if (!isHost || cell.status !== 'unclaimed' || gameState.winner) return;
-
     sfx.playHexSelect();
 
-    // Golden question = free point, no question needed
     if (cell.isGolden) {
       sfx.playGolden();
       setSelectedCell(cell);
@@ -68,11 +62,9 @@ const Game = () => {
     setSelectedCell(cell);
     setCurrentQuestion(q);
     setAnswerRevealed(false);
-
     setTimeout(() => sfx.playQuestionReveal(), 300);
   }, [isHost, gameState.winner, sfx]);
 
-  // Award hex to a team
   const awardHex = useCallback((team: 'team1' | 'team2') => {
     if (!selectedCell) return;
     sfx.playCorrect();
@@ -81,17 +73,13 @@ const Game = () => {
       const newBoard = prev.board.map(c =>
         c.index === selectedCell.index ? { ...c, status: team } : c
       );
-
       const winPath = checkWin(newBoard, team);
       const hasWinner = winPath !== null;
-
       const finalBoard = hasWinner
         ? newBoard.map(c => ({ ...c, isWinningPath: winPath!.includes(c.index) }))
         : newBoard;
 
-      if (hasWinner) {
-        setTimeout(() => sfx.playWin(), 500);
-      }
+      if (hasWinner) setTimeout(() => sfx.playWin(), 500);
 
       return {
         ...prev,
@@ -108,80 +96,48 @@ const Game = () => {
     setCurrentQuestion(null);
   }, [selectedCell, sfx]);
 
-  // Wrong answer
   const handleWrong = useCallback(() => {
     sfx.playWrong();
-    setGameState(prev => ({
-      ...prev,
-      currentTurn: prev.currentTurn === 'team1' ? 'team2' : 'team1',
-    }));
+    setGameState(prev => ({ ...prev, currentTurn: prev.currentTurn === 'team1' ? 'team2' : 'team1' }));
     setSelectedCell(null);
     setCurrentQuestion(null);
   }, [sfx]);
 
-  // Play again
   const playAgain = useCallback(() => {
-    setGameState({
-      ...createInitialGameState(),
-      team1Name,
-      team2Name,
-      team1Color,
-      team2Color,
-    });
+    setGameState({ ...createInitialGameState(), team1Name, team2Name, team1Color, team2Color });
   }, [team1Name, team2Name, team1Color, team2Color]);
 
   const currentTeamName = gameState.currentTurn === 'team1' ? team1Name : team2Name;
+  const turnColor = currentTurnColor === 'terracotta' ? 'hsl(20 76% 58%)' : 'hsl(217 92% 60%)';
 
   return (
     <div className="min-h-screen stage-bg sweep-light flex flex-col">
       {/* Header */}
       <div className="pt-4 pb-2 px-4 relative">
         <GameTitle hostName={hostName} />
-        {/* Mascot watermark - subtle corner */}
-        <img
-          src={mascotImg}
-          alt=""
-          className="absolute top-3 left-3 w-10 h-10 object-contain opacity-20 pointer-events-none"
-        />
+        <img src={mascotImg} alt="" className="absolute top-3 left-3 w-10 h-10 object-contain opacity-20 pointer-events-none" />
       </div>
 
       {/* Game area */}
       <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 px-4 py-4">
-        <ScorePanel
-          teamName={team1Name}
-          score={gameState.team1Score}
-          teamColor={team1Color}
-          isActive={gameState.currentTurn === 'team1'}
-        />
+        <ScorePanel teamName={team1Name} score={gameState.team1Score} teamColor={team1Color} isActive={gameState.currentTurn === 'team1'} />
 
         <div className="relative">
-          <img
-            src={mascotImg}
-            alt=""
-            className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 object-contain opacity-[0.03] pointer-events-none"
-          />
+          <img src={mascotImg} alt="" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 object-contain opacity-[0.03] pointer-events-none" />
           <HexBoard
-            board={gameState.board}
-            currentTurn={gameState.currentTurn}
-            team1Color={team1Color}
-            team2Color={team2Color}
-            onHexClick={handleHexClick}
-            disabled={!isHost || !!gameState.winner}
+            board={gameState.board} currentTurn={gameState.currentTurn}
+            team1Color={team1Color} team2Color={team2Color}
+            onHexClick={handleHexClick} disabled={!isHost || !!gameState.winner}
           />
         </div>
 
-        <ScorePanel
-          teamName={team2Name}
-          score={gameState.team2Score}
-          teamColor={team2Color}
-          isActive={gameState.currentTurn === 'team2'}
-        />
+        <ScorePanel teamName={team2Name} score={gameState.team2Score} teamColor={team2Color} isActive={gameState.currentTurn === 'team2'} />
       </div>
 
       {/* Turn indicator */}
       <motion.div
         className="text-center py-3 font-tajawal font-bold text-lg"
-        style={{ color: currentTurnColor === 'terracotta' ? '#E57A44' : '#3B82F6' }}
+        style={{ color: turnColor }}
         key={gameState.currentTurn}
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -194,33 +150,23 @@ const Game = () => {
         )}
       </motion.div>
 
-      {/* Question Modal */}
       {currentQuestion && selectedCell && (
         <QuestionModal
-          isOpen={true}
-          letter={selectedCell.letter}
-          question={currentQuestion.question}
-          answer={currentQuestion.answer}
-          category={currentQuestion.category}
-          isHost={isHost}
-          answerRevealed={answerRevealed}
-          currentTurnColor={currentTurnColor}
-          team1Name={team1Name}
-          team2Name={team2Name}
-          onCorrectTeam1={() => awardHex('team1')}
-          onCorrectTeam2={() => awardHex('team2')}
-          onWrong={handleWrong}
-          onClose={() => { setSelectedCell(null); setCurrentQuestion(null); }}
+          isOpen={true} letter={selectedCell.letter}
+          question={currentQuestion.question} answer={currentQuestion.answer}
+          category={currentQuestion.category} isHost={isHost}
+          answerRevealed={answerRevealed} currentTurnColor={currentTurnColor}
+          team1Name={team1Name} team2Name={team2Name}
+          onCorrectTeam1={() => awardHex('team1')} onCorrectTeam2={() => awardHex('team2')}
+          onWrong={handleWrong} onClose={() => { setSelectedCell(null); setCurrentQuestion(null); }}
         />
       )}
 
-      {/* Winner overlay */}
       {gameState.winner && (
         <WinnerOverlay
           winnerName={gameState.winner === 'team1' ? team1Name : team2Name}
           winnerColor={gameState.winner === 'team1' ? team1Color : team2Color}
-          onPlayAgain={playAgain}
-          onMainMenu={() => navigate("/")}
+          onPlayAgain={playAgain} onMainMenu={() => navigate("/")}
         />
       )}
     </div>

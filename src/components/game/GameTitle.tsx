@@ -1,6 +1,5 @@
 // ============================
-// GameTitle: Dynamic 3D-styled title "خلية الحروف مع [Host Name]"
-// Fixed: no random numbers, clean rendering
+// GameTitle: 3D CSS text-shadow title, no random numbers
 // ============================
 import { motion } from "framer-motion";
 
@@ -17,21 +16,30 @@ const GameTitle = ({ hostName = "رحّال", className = "" }: GameTitleProps) 
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
     >
-      <h1 className="text-3xl md:text-5xl lg:text-6xl font-tajawal font-[900] leading-tight tracking-tight">
-        <span className="text-cream" style={{ textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}>
-          خلية{" "}
-        </span>
-        <span className="text-golden" style={{ textShadow: "0 2px 4px rgba(250,204,21,0.3), 0 0 20px rgba(250,204,21,0.1)" }}>
-          الحروف
-        </span>
+      <h1
+        className="text-3xl md:text-5xl lg:text-6xl font-tajawal font-[900] leading-tight tracking-tight"
+        style={{
+          textShadow: `
+            0 1px 0 hsl(20 76% 48%),
+            0 2px 0 hsl(20 76% 43%),
+            0 3px 0 hsl(20 76% 38%),
+            0 4px 0 hsl(20 76% 33%),
+            0 6px 10px rgba(0,0,0,0.4),
+            0 10px 20px rgba(0,0,0,0.2)
+          `,
+        }}
+      >
+        <span style={{ color: 'hsl(var(--cream))' }}>خلية </span>
+        <span style={{ color: 'hsl(var(--golden))' }}>الحروف</span>
       </h1>
-      <div className="text-xl md:text-2xl lg:text-3xl mt-1 font-tajawal font-bold">
-        <span className="text-accent" style={{ textShadow: "0 2px 8px rgba(59,130,246,0.3)" }}>
-          مع{" "}
-        </span>
-        <span className="text-primary" style={{ textShadow: "0 2px 8px rgba(229,122,68,0.3)" }}>
-          {hostName}
-        </span>
+      <div
+        className="text-xl md:text-2xl lg:text-3xl mt-1 font-tajawal font-bold"
+        style={{
+          textShadow: '0 2px 8px rgba(0,0,0,0.4)',
+        }}
+      >
+        <span style={{ color: 'hsl(var(--accent))' }}>مع </span>
+        <span style={{ color: 'hsl(var(--primary))' }}>{hostName}</span>
       </div>
     </motion.div>
   );
