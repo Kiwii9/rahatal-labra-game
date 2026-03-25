@@ -1,5 +1,5 @@
 // ============================
-// Game: Live game stage - cleaned up, no floating artifacts
+// Game: Live game stage with pre-question interceptor
 // ============================
 import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -7,9 +7,10 @@ import { motion } from "framer-motion";
 import HexBoard from "@/components/game/HexBoard";
 import ScorePanel from "@/components/game/ScorePanel";
 import QuestionModal from "@/components/game/QuestionModal";
+import PreQuestionModal from "@/components/game/PreQuestionModal";
 import GameTitle from "@/components/game/GameTitle";
 import WinnerOverlay from "@/components/game/WinnerOverlay";
-import mascotImg from "@/assets/mascot.png";
+import GameFooter from "@/components/game/GameFooter";
 import { useSoundEffects } from "@/hooks/useSoundEffects";
 import {
   createInitialGameState,
@@ -39,31 +40,44 @@ const Game = () => {
   const [selectedCell, setSelectedCell] = useState<HexCell | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<{ question: string; answer: string; category: string } | null>(null);
   const [answerRevealed, setAnswerRevealed] = useState(false);
+  const [showPreQuestion, setShowPreQuestion] = useState(false);
+  const [pendingCell, setPendingCell] = useState<HexCell | null>(null);
 
   const currentTurnColor = gameState.currentTurn === 'team1' ? team1Color : team2Color;
 
+  // Step 1: Click hex → show pre-question modal
   const handleHexClick = useCallback((cell: HexCell) => {
     if (!isHost || cell.status !== 'unclaimed' || gameState.winner) return;
     sfx.playHexSelect();
+    setPendingCell(cell);
+    setShowPreQuestion(true);
+  }, [isHost, gameState.winner, sfx]);
 
-    if (cell.isGolden) {
+  // Step 2: Pre-question confirmed → show actual question
+  const handleShowQuestion = useCallback(() => {
+    if (!pendingCell) return;
+    setShowPreQuestion(false);
+
+    if (pendingCell.isGolden) {
       sfx.playGolden();
-      setSelectedCell(cell);
+      setSelectedCell(pendingCell);
       setCurrentQuestion({
-        question: '⭐ سؤال ذهبي! نقطة مجانية لأحد الفريقين ⭐',
+        question: 'سؤال ذهبي! نقطة مجانية لأحد الفريقين',
         answer: 'اختر الفريق الذي يحصل على النقطة',
         category: 'سؤال ذهبي',
       });
       setAnswerRevealed(true);
+      setPendingCell(null);
       return;
     }
 
-    const q = getQuestionForLetter(cell.letter);
-    setSelectedCell(cell);
+    const q = getQuestionForLetter(pendingCell.letter);
+    setSelectedCell(pendingCell);
     setCurrentQuestion(q);
     setAnswerRevealed(false);
+    setPendingCell(null);
     setTimeout(() => sfx.playQuestionReveal(), 300);
-  }, [isHost, gameState.winner, sfx]);
+  }, [pendingCell, sfx]);
 
   const awardHex = useCallback((team: 'team1' | 'team2') => {
     if (!selectedCell) return;
@@ -108,48 +122,63 @@ const Game = () => {
   }, [team1Name, team2Name, team1Color, team2Color]);
 
   const currentTeamName = gameState.currentTurn === 'team1' ? team1Name : team2Name;
-  const turnColor = currentTurnColor === 'terracotta' ? 'hsl(20 76% 58%)' : 'hsl(217 92% 60%)';
+  const turnColor = currentTurnColor === 'terracotta' ? '#f28b44' : '#4a80e8';
 
   return (
-    <div className="min-h-screen stage-bg sweep-light flex flex-col">
+    <div className="min-h-screen flex flex-col relative" style={{ backgroundColor: '#1a3644' }}>
       {/* Header */}
-      <div className="pt-4 pb-2 px-4 relative">
-        <GameTitle hostName={hostName} />
-        <img src={mascotImg} alt="" className="absolute top-3 left-3 w-10 h-10 object-contain opacity-20 pointer-events-none" />
+      <div className="pt-4 pb-2 px-4">
+        <GameTitle hostName={hostName} className="scale-90 md:scale-100" />
       </div>
 
       {/* Game area */}
-      <div className="flex-1 flex flex-col md:flex-row items-center justify-center gap-6 md:gap-10 px-4 py-4">
-        <ScorePanel teamName={team1Name} score={gameState.team1Score} teamColor={team1Color} isActive={gameState.currentTurn === 'team1'} />
+      <div className="flex-1 flex flex-col items-center justify-center gap-4 px-2 md:px-4 py-2 md:py-4">
+        {/* Score panels + Board */}
+        <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-8 w-full max-w-5xl">
+          {/* Team 2 score (right side in RTL) */}
+          <div className="order-1 md:order-1">
+            <ScorePanel teamName={team2Name} score={gameState.team2Score} teamColor={team2Color} isActive={gameState.currentTurn === 'team2'} />
+          </div>
 
-        <div className="relative">
-          <img src={mascotImg} alt="" className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 object-contain opacity-[0.03] pointer-events-none" />
-          <HexBoard
-            board={gameState.board} currentTurn={gameState.currentTurn}
-            team1Color={team1Color} team2Color={team2Color}
-            onHexClick={handleHexClick} disabled={!isHost || !!gameState.winner}
-          />
+          {/* Board */}
+          <div className="order-2 md:order-2 w-full max-w-[600px] md:max-w-[700px]">
+            <HexBoard
+              board={gameState.board} currentTurn={gameState.currentTurn}
+              team1Color={team1Color} team2Color={team2Color}
+              onHexClick={handleHexClick} disabled={!isHost || !!gameState.winner}
+            />
+          </div>
+
+          {/* Team 1 score (left side in RTL) */}
+          <div className="order-3 md:order-3">
+            <ScorePanel teamName={team1Name} score={gameState.team1Score} teamColor={team1Color} isActive={gameState.currentTurn === 'team1'} />
+          </div>
         </div>
 
-        <ScorePanel teamName={team2Name} score={gameState.team2Score} teamColor={team2Color} isActive={gameState.currentTurn === 'team2'} />
+        {/* Turn indicator */}
+        <motion.div
+          className="text-center py-2 font-tajawal font-bold text-base md:text-lg"
+          style={{ color: turnColor }}
+          key={gameState.currentTurn}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {!gameState.winner && (
+            <>
+              الدور الآن: {currentTeamName}
+              {!isHost && <span className="text-cream/40 text-sm mr-2"> (في انتظار المضيف...)</span>}
+            </>
+          )}
+        </motion.div>
       </div>
 
-      {/* Turn indicator */}
-      <motion.div
-        className="text-center py-3 font-tajawal font-bold text-lg"
-        style={{ color: turnColor }}
-        key={gameState.currentTurn}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        {!gameState.winner && (
-          <>
-            الدور الآن: {currentTeamName}
-            {!isHost && <span className="text-cream/40 text-sm mr-2"> (في انتظار المضيف...)</span>}
-          </>
-        )}
-      </motion.div>
+      {/* Pre-question interceptor */}
+      <PreQuestionModal
+        isOpen={showPreQuestion}
+        onShowQuestion={handleShowQuestion}
+      />
 
+      {/* Actual question modal */}
       {currentQuestion && selectedCell && (
         <QuestionModal
           isOpen={true} letter={selectedCell.letter}
@@ -169,6 +198,8 @@ const Game = () => {
           onPlayAgain={playAgain} onMainMenu={() => navigate("/")}
         />
       )}
+
+      <GameFooter />
     </div>
   );
 };

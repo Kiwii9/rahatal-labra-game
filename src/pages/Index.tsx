@@ -1,39 +1,71 @@
 // ============================
-// Index: Main landing page with 3D title, auth buttons, host name input
+// Index: Landing page with 3D title, Zid auth, host name input
 // ============================
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { lovable } from "@/integrations/lovable/index";
+import { GoogleIcon, AppleIcon, EmailIcon } from "@/components/icons/AuthIcons";
+import { validateZidPurchase, validateDebugCode } from "@/lib/zidMockService";
+import GameTitle from "@/components/game/GameTitle";
+import GameFooter from "@/components/game/GameFooter";
 import patternTribal from "@/assets/pattern-tribal.webp";
 import patternGeometric from "@/assets/pattern-geometric.webp";
-import GameFooter from "@/components/game/GameFooter";
 
 const Index = () => {
   const navigate = useNavigate();
+  const [hostName, setHostName] = useState("رحّال");
   const [roomCode, setRoomCode] = useState("");
   const [showJoin, setShowJoin] = useState(false);
   const [authLoading, setAuthLoading] = useState<string | null>(null);
+  const [authError, setAuthError] = useState("");
+  const [showDebug, setShowDebug] = useState(false);
+  const [debugCode, setDebugCode] = useState("");
 
   const handleSignIn = async (provider: "google" | "apple") => {
     setAuthLoading(provider);
+    setAuthError("");
     try {
       const { error } = await lovable.auth.signInWithOAuth(provider, {
         redirect_uri: window.location.origin,
       });
       if (error) {
+        setAuthError("حدث خطأ في تسجيل الدخول. حاول مرة أخرى.");
         console.error(`${provider} sign-in error:`, error);
       }
+      // After OAuth, would validate Zid purchase on callback
     } catch (err) {
+      setAuthError("تعذر الاتصال. تحقق من اتصال الإنترنت.");
       console.error(`${provider} sign-in failed:`, err);
     } finally {
       setAuthLoading(null);
     }
   };
 
+  const handleEmailSignIn = async () => {
+    setAuthLoading("email");
+    setAuthError("");
+    // Mock: validate Zid purchase for a demo email
+    const result = await validateZidPurchase("team.rahal3@gmail.com");
+    if (result.valid) {
+      navigate("/lobby");
+    } else {
+      setAuthError(result.message);
+    }
+    setAuthLoading(null);
+  };
+
+  const handleDebugBypass = () => {
+    if (validateDebugCode(debugCode)) {
+      navigate("/lobby");
+    } else {
+      setAuthError("رمز غير صالح");
+    }
+  };
+
   return (
-    <div className="min-h-screen flex flex-col stage-bg sweep-light relative">
-      {/* Background patterns with blend mode */}
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: '#1a3644' }}>
+      {/* Background patterns */}
       <div
         className="absolute inset-0 pointer-events-none opacity-[0.04]"
         style={{
@@ -54,103 +86,121 @@ const Index = () => {
       />
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col items-center justify-center px-4 py-12 relative z-10">
-        {/* 3D Title */}
+      <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 md:py-12 relative z-10">
+        {/* 3D Editable Title */}
         <motion.div
-          className="text-center mb-8"
+          className="mb-6 md:mb-10"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2, duration: 0.8 }}
         >
-          <h1
-            className="text-5xl md:text-7xl font-tajawal font-[900] leading-tight"
+          <GameTitle hostName={hostName} editable onHostNameChange={setHostName} />
+        </motion.div>
+
+        {/* Host name input */}
+        <motion.div
+          className="w-full max-w-sm mb-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.6 }}
+        >
+          <label className="text-cream/60 text-sm font-tajawal block mb-1.5">اسم المضيف</label>
+          <input
+            value={hostName}
+            onChange={(e) => setHostName(e.target.value)}
+            placeholder="أدخل اسمك هنا"
+            className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none transition-colors"
             style={{
-              textShadow: `
-                0 1px 0 hsl(20 76% 48%),
-                0 2px 0 hsl(20 76% 43%),
-                0 3px 0 hsl(20 76% 38%),
-                0 4px 0 hsl(20 76% 33%),
-                0 5px 0 hsl(20 76% 28%),
-                0 8px 15px rgba(0,0,0,0.4),
-                0 12px 25px rgba(0,0,0,0.2)
-              `,
+              backgroundColor: 'rgba(26,54,68,0.6)',
+              borderColor: 'rgba(242,139,68,0.3)',
+              color: 'hsl(var(--cream))',
             }}
-          >
-            <span style={{ color: 'hsl(var(--cream))' }}>خلية </span>
-            <span style={{ color: 'hsl(var(--golden))' }}>الحروف</span>
-          </h1>
-          <p className="text-cream/50 text-lg md:text-xl font-tajawal mt-3">
-            لعبة المعرفة والتحدي الجماعي
-          </p>
+          />
         </motion.div>
 
         {/* Auth buttons */}
         <motion.div
-          className="flex flex-col gap-3 w-full max-w-sm mb-8"
+          className="flex flex-col gap-3 w-full max-w-sm mb-6"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4, duration: 0.6 }}
+          transition={{ delay: 0.5, duration: 0.6 }}
         >
           <button
             className="w-full py-3 rounded-xl font-tajawal font-bold text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: '#fff',
-              color: '#333',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-            }}
+            style={{ background: '#fff', color: '#333', boxShadow: '0 2px 8px rgba(0,0,0,0.2)' }}
             onClick={() => handleSignIn("google")}
             disabled={!!authLoading}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24">
-              <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
-              <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
-              <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
-              <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
-            </svg>
+            <GoogleIcon />
             {authLoading === "google" ? "جاري التسجيل..." : "تسجيل الدخول بـ Google"}
           </button>
 
           <button
             className="w-full py-3 rounded-xl font-tajawal font-bold text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            style={{
-              background: '#000',
-              color: '#fff',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-            }}
+            style={{ background: '#000', color: '#fff', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}
             onClick={() => handleSignIn("apple")}
             disabled={!!authLoading}
           >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="white">
-              <path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.48-3.24 0-1.44.62-2.2.44-3.06-.4C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
-            </svg>
+            <AppleIcon />
             {authLoading === "apple" ? "جاري التسجيل..." : "تسجيل الدخول بـ Apple"}
           </button>
+
+          <button
+            className="w-full py-3 rounded-xl font-tajawal font-bold text-base flex items-center justify-center gap-3 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: 'linear-gradient(135deg, #f28b44, #e07030)',
+              color: '#fff',
+              boxShadow: '0 2px 8px rgba(242,139,68,0.3)',
+            }}
+            onClick={handleEmailSignIn}
+            disabled={!!authLoading}
+          >
+            <EmailIcon />
+            {authLoading === "email" ? "جاري التحقق..." : "تسجيل الدخول بالبريد"}
+          </button>
+
+          {authError && (
+            <motion.p
+              className="text-center text-sm font-tajawal"
+              style={{ color: '#ef4444' }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              {authError}
+            </motion.p>
+          )}
         </motion.div>
 
         {/* Action buttons */}
         <motion.div
-          className="flex flex-col gap-4 w-full max-w-sm"
+          className="flex flex-col gap-3 w-full max-w-sm"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.6, duration: 0.6 }}
+          transition={{ delay: 0.65, duration: 0.6 }}
         >
           <motion.button
-            className="btn-golden w-full py-4 rounded-xl font-tajawal font-bold text-xl transition-all"
-            whileHover={{ scale: 1.03 }}
+            className="w-full py-4 rounded-xl font-tajawal font-[900] text-xl transition-all"
+            style={{
+              background: 'linear-gradient(135deg, #f28b44, #e07030)',
+              color: '#fff',
+              boxShadow: '0 0 20px rgba(242,139,68,0.4)',
+            }}
+            whileHover={{ scale: 1.03, boxShadow: '0 0 30px rgba(242,139,68,0.6)' }}
             whileTap={{ scale: 0.97 }}
             onClick={() => navigate("/lobby")}
           >
-            🎙️ تسجيل دخول المضيف
+            تسجيل دخول المضيف
           </motion.button>
 
           {!showJoin ? (
             <motion.button
-              className="glass w-full py-4 rounded-xl font-tajawal font-bold text-xl text-cream transition-all hover:bg-cream/10"
+              className="glass w-full py-4 rounded-xl font-tajawal font-bold text-xl transition-all"
+              style={{ color: 'hsl(var(--cream))' }}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.97 }}
               onClick={() => setShowJoin(true)}
             >
-              🎮 الانضمام للعبة
+              الانضمام للعبة
             </motion.button>
           ) : (
             <motion.div
@@ -166,11 +216,17 @@ const Index = () => {
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))}
                   placeholder="000000"
-                  className="flex-1 bg-background/50 border border-cream/20 rounded-lg px-4 py-3 text-cream text-center text-2xl font-tajawal tracking-[0.3em] placeholder:text-cream/30 focus:outline-none focus:border-primary"
+                  className="flex-1 rounded-lg px-4 py-3 text-center text-2xl font-tajawal tracking-[0.3em] focus:outline-none"
+                  style={{
+                    backgroundColor: 'rgba(26,54,68,0.5)',
+                    border: '1px solid rgba(255,255,255,0.15)',
+                    color: 'hsl(var(--cream))',
+                  }}
                   dir="ltr"
                 />
                 <motion.button
-                  className="btn-terracotta px-6 rounded-lg font-tajawal font-bold"
+                  className="px-6 rounded-lg font-tajawal font-bold"
+                  style={{ background: 'linear-gradient(135deg, #f28b44, #e07030)', color: '#fff' }}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                   onClick={() => roomCode.length === 6 && navigate(`/game?room=${roomCode}&role=player`)}
@@ -182,8 +238,51 @@ const Index = () => {
             </motion.div>
           )}
 
+          {/* Debug bypass */}
+          <button
+            className="text-cream/30 hover:text-cream/50 text-xs font-tajawal transition-colors mt-2"
+            onClick={() => setShowDebug(!showDebug)}
+          >
+            وضع المطوّر
+          </button>
+
+          <AnimatePresence>
+            {showDebug && (
+              <motion.div
+                className="glass rounded-xl p-4"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+              >
+                <p className="text-cream/50 text-xs font-tajawal mb-2">رمز الاستخدام غير المحدود (Debug)</p>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={debugCode}
+                    onChange={(e) => setDebugCode(e.target.value)}
+                    placeholder="أدخل الرمز"
+                    className="flex-1 rounded-lg px-3 py-2 text-sm font-tajawal focus:outline-none"
+                    style={{
+                      backgroundColor: 'rgba(26,54,68,0.5)',
+                      border: '1px solid rgba(255,255,255,0.1)',
+                      color: 'hsl(var(--cream))',
+                    }}
+                    dir="ltr"
+                  />
+                  <button
+                    className="px-4 py-2 rounded-lg text-sm font-tajawal font-bold"
+                    style={{ background: 'linear-gradient(135deg, #4a80e8, #3668c0)', color: '#fff' }}
+                    onClick={handleDebugBypass}
+                  >
+                    تحقق
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           <motion.button
-            className="text-cream/40 hover:text-cream/60 text-sm font-tajawal transition-colors mt-2"
+            className="text-cream/40 hover:text-cream/60 text-sm font-tajawal transition-colors"
             onClick={() => navigate("/about")}
           >
             من نحن؟
