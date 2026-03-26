@@ -14,7 +14,113 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      players: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_captain: boolean
+          name: string
+          room_id: string
+          team: string
+          user_id: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_captain?: boolean
+          name: string
+          room_id: string
+          team: string
+          user_id?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_captain?: boolean
+          name?: string
+          room_id?: string
+          team?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "players_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rooms: {
+        Row: {
+          board: Json | null
+          buzzer_state: string
+          buzzer_team: string | null
+          cooldown_expires_at: string | null
+          created_at: string
+          current_hex_index: number | null
+          current_turn: string
+          host_id: string | null
+          host_name: string
+          id: string
+          pin: string
+          rebound_expires_at: string | null
+          status: string
+          team1_color: string
+          team1_name: string
+          team1_score: number
+          team2_color: string
+          team2_name: string
+          team2_score: number
+        }
+        Insert: {
+          board?: Json | null
+          buzzer_state?: string
+          buzzer_team?: string | null
+          cooldown_expires_at?: string | null
+          created_at?: string
+          current_hex_index?: number | null
+          current_turn?: string
+          host_id?: string | null
+          host_name?: string
+          id?: string
+          pin: string
+          rebound_expires_at?: string | null
+          status?: string
+          team1_color?: string
+          team1_name?: string
+          team1_score?: number
+          team2_color?: string
+          team2_name?: string
+          team2_score?: number
+        }
+        Update: {
+          board?: Json | null
+          buzzer_state?: string
+          buzzer_team?: string | null
+          cooldown_expires_at?: string | null
+          created_at?: string
+          current_hex_index?: number | null
+          current_turn?: string
+          host_id?: string | null
+          host_name?: string
+          id?: string
+          pin?: string
+          rebound_expires_at?: string | null
+          status?: string
+          team1_color?: string
+          team1_name?: string
+          team1_score?: number
+          team2_color?: string
+          team2_name?: string
+          team2_score?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
