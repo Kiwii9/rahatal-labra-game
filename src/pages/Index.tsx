@@ -31,12 +31,9 @@ const Index = () => {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-        if (profile?.purchase_verified) {
+        const { data: profile } = await (supabase as any)
+          .from('profiles').select('*').eq('user_id', session.user.id).single();
+        if ((profile as any)?.purchase_verified) {
           navigate("/lobby");
         } else {
           setShowPurchaseValidation(true);
@@ -46,12 +43,9 @@ const Index = () => {
     // Check existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .single();
-        if (profile?.purchase_verified) {
+        const { data: profile } = await (supabase as any)
+          .from('profiles').select('*').eq('user_id', session.user.id).single();
+        if ((profile as any)?.purchase_verified) {
           navigate("/lobby");
         } else if (profile) {
           setShowPurchaseValidation(true);
@@ -107,7 +101,7 @@ const Index = () => {
     if (result.valid || codeValid) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        await supabase.from('profiles').update({
+        await (supabase as any).from('profiles').update({
           purchase_code: purchaseCode || result.purchaseId,
           purchase_verified: true,
           display_name: hostName,
