@@ -61,54 +61,74 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
   const ox = padding + HEX_W / 2 + 10;
   const oy = padding + HEX_SIZE + 20;
 
-  // Render triangle border bases that physically touch the grid edges
+  // Render border hexagons that physically enclose the grid (matching reference layout)
   const renderBorders = () => {
     const elements: JSX.Element[] = [];
+    const borderSize = HEX_SIZE * 0.45;
 
-    // Team 1: TOP triangles (pointing down, touching top row hex edges)
+    // Team 1: TOP border - row of small triangles along top edge
     for (let col = 0; col < GRID_COLS; col++) {
-      // Top row hex centers
       const [cx, cy] = hexCenter(0, col, ox, oy);
-      const topY = cy - HEX_SIZE; // top vertex of top-row hex
-      const triH = 18;
-      // Triangle pointing down, sitting above each hex
+      const topY = cy - HEX_SIZE;
+      const triH = borderSize;
       elements.push(
         <polygon
           key={`t1-top-${col}`}
-          points={`${cx - HEX_W * 0.28},${topY - triH} ${cx + HEX_W * 0.28},${topY - triH} ${cx},${topY}`}
+          points={`${cx - HEX_W * 0.35},${topY - triH} ${cx + HEX_W * 0.35},${topY - triH} ${cx},${topY + 2}`}
           fill={team1Hex}
-          opacity={0.85}
+          opacity={0.9}
+          stroke={team1Hex}
+          strokeWidth="1"
         />
       );
     }
-    // Also fill between top-row hexes with triangles
     for (let col = 0; col < GRID_COLS - 1; col++) {
       const [cx1, cy1] = hexCenter(0, col, ox, oy);
       const [cx2] = hexCenter(0, col + 1, ox, oy);
       const midX = (cx1 + cx2) / 2;
       const topY = cy1 - HEX_SIZE;
-      const triH = 18;
+      const triH = borderSize;
       elements.push(
         <polygon
           key={`t1-top-gap-${col}`}
-          points={`${midX - HEX_W * 0.22},${topY - triH} ${midX + HEX_W * 0.22},${topY - triH} ${midX},${topY - triH + 6}`}
+          points={`${midX - HEX_W * 0.25},${topY - triH} ${midX + HEX_W * 0.25},${topY - triH} ${midX},${topY + 2}`}
           fill={team1Hex}
-          opacity={0.65}
+          opacity={0.75}
+          stroke={team1Hex}
+          strokeWidth="0.5"
         />
       );
     }
+    // Connecting bar along top
+    const [topLeft] = hexCenter(0, 0, ox, oy);
+    const [topRight] = hexCenter(0, GRID_COLS - 1, ox, oy);
+    const topBarY = hexCenter(0, 0, ox, oy)[1] - HEX_SIZE - borderSize;
+    elements.push(
+      <rect
+        key="t1-top-bar"
+        x={topLeft - HEX_W * 0.35}
+        y={topBarY - 4}
+        width={topRight - topLeft + HEX_W * 0.7}
+        height={6}
+        rx={3}
+        fill={team1Hex}
+        opacity={0.9}
+      />
+    );
 
-    // Team 1: BOTTOM triangles (pointing up, touching bottom row hex edges)
+    // Team 1: BOTTOM border
     for (let col = 0; col < GRID_COLS; col++) {
       const [cx, cy] = hexCenter(GRID_ROWS - 1, col, ox, oy);
       const botY = cy + HEX_SIZE;
-      const triH = 18;
+      const triH = borderSize;
       elements.push(
         <polygon
           key={`t1-bot-${col}`}
-          points={`${cx - HEX_W * 0.28},${botY + triH} ${cx + HEX_W * 0.28},${botY + triH} ${cx},${botY}`}
+          points={`${cx - HEX_W * 0.35},${botY + triH} ${cx + HEX_W * 0.35},${botY + triH} ${cx},${botY - 2}`}
           fill={team1Hex}
-          opacity={0.85}
+          opacity={0.9}
+          stroke={team1Hex}
+          strokeWidth="1"
         />
       );
     }
@@ -117,43 +137,103 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
       const [cx2] = hexCenter(GRID_ROWS - 1, col + 1, ox, oy);
       const midX = (cx1 + cx2) / 2;
       const botY = cy1 + HEX_SIZE;
-      const triH = 18;
+      const triH = borderSize;
       elements.push(
         <polygon
           key={`t1-bot-gap-${col}`}
-          points={`${midX - HEX_W * 0.22},${botY + triH} ${midX + HEX_W * 0.22},${botY + triH} ${midX},${botY + triH - 6}`}
+          points={`${midX - HEX_W * 0.25},${botY + triH} ${midX + HEX_W * 0.25},${botY + triH} ${midX},${botY - 2}`}
           fill={team1Hex}
-          opacity={0.65}
+          opacity={0.75}
+          stroke={team1Hex}
+          strokeWidth="0.5"
         />
       );
     }
+    // Connecting bar along bottom
+    const [botLeft] = hexCenter(GRID_ROWS - 1, 0, ox, oy);
+    const [botRight] = hexCenter(GRID_ROWS - 1, GRID_COLS - 1, ox, oy);
+    const botBarY = hexCenter(GRID_ROWS - 1, 0, ox, oy)[1] + HEX_SIZE + borderSize;
+    elements.push(
+      <rect
+        key="t1-bot-bar"
+        x={botLeft - HEX_W * 0.35}
+        y={botBarY - 2}
+        width={botRight - botLeft + HEX_W * 0.7}
+        height={6}
+        rx={3}
+        fill={team1Hex}
+        opacity={0.9}
+      />
+    );
 
-    // Team 2: LEFT triangles (pointing right, touching left column hex edges)
+    // Team 2: LEFT border
     for (let row = 0; row < GRID_ROWS; row++) {
       const [cx, cy] = hexCenter(row, 0, ox, oy);
       const leftX = cx - HEX_W / 2;
-      const triW = 18;
+      const triW = borderSize;
       elements.push(
         <polygon
           key={`t2-left-${row}`}
-          points={`${leftX - triW},${cy - HEX_SIZE * 0.28} ${leftX - triW},${cy + HEX_SIZE * 0.28} ${leftX},${cy}`}
+          points={`${leftX - triW},${cy - HEX_SIZE * 0.35} ${leftX - triW},${cy + HEX_SIZE * 0.35} ${leftX + 2},${cy}`}
           fill={team2Hex}
-          opacity={0.85}
+          opacity={0.9}
+          stroke={team2Hex}
+          strokeWidth="1"
+        />
+      );
+    }
+    // Fill gaps between left column rows
+    for (let row = 0; row < GRID_ROWS - 1; row++) {
+      const [, cy1] = hexCenter(row, 0, ox, oy);
+      const [cx2, cy2] = hexCenter(row + 1, 0, ox, oy);
+      const leftX1 = hexCenter(row, 0, ox, oy)[0] - HEX_W / 2;
+      const leftX2 = cx2 - HEX_W / 2;
+      const midY = (cy1 + cy2) / 2;
+      const midX = (leftX1 + leftX2) / 2;
+      elements.push(
+        <polygon
+          key={`t2-left-gap-${row}`}
+          points={`${midX - borderSize},${midY - HEX_SIZE * 0.2} ${midX - borderSize},${midY + HEX_SIZE * 0.2} ${midX + 2},${midY}`}
+          fill={team2Hex}
+          opacity={0.7}
+          stroke={team2Hex}
+          strokeWidth="0.5"
         />
       );
     }
 
-    // Team 2: RIGHT triangles (pointing left, touching right column hex edges)
+    // Team 2: RIGHT border
     for (let row = 0; row < GRID_ROWS; row++) {
       const [cx, cy] = hexCenter(row, GRID_COLS - 1, ox, oy);
       const rightX = cx + HEX_W / 2;
-      const triW = 18;
+      const triW = borderSize;
       elements.push(
         <polygon
           key={`t2-right-${row}`}
-          points={`${rightX + triW},${cy - HEX_SIZE * 0.28} ${rightX + triW},${cy + HEX_SIZE * 0.28} ${rightX},${cy}`}
+          points={`${rightX + triW},${cy - HEX_SIZE * 0.35} ${rightX + triW},${cy + HEX_SIZE * 0.35} ${rightX - 2},${cy}`}
           fill={team2Hex}
-          opacity={0.85}
+          opacity={0.9}
+          stroke={team2Hex}
+          strokeWidth="1"
+        />
+      );
+    }
+    // Fill gaps between right column rows
+    for (let row = 0; row < GRID_ROWS - 1; row++) {
+      const [, cy1] = hexCenter(row, GRID_COLS - 1, ox, oy);
+      const [cx2, cy2] = hexCenter(row + 1, GRID_COLS - 1, ox, oy);
+      const rightX1 = hexCenter(row, GRID_COLS - 1, ox, oy)[0] + HEX_W / 2;
+      const rightX2 = cx2 + HEX_W / 2;
+      const midY = (cy1 + cy2) / 2;
+      const midX = (rightX1 + rightX2) / 2;
+      elements.push(
+        <polygon
+          key={`t2-right-gap-${row}`}
+          points={`${midX + borderSize},${midY - HEX_SIZE * 0.2} ${midX + borderSize},${midY + HEX_SIZE * 0.2} ${midX - 2},${midY}`}
+          fill={team2Hex}
+          opacity={0.7}
+          stroke={team2Hex}
+          strokeWidth="0.5"
         />
       );
     }

@@ -1,5 +1,5 @@
 // ============================
-// Game: Live game stage with pre-question interceptor
+// Game: Live game stage with one-time start modal & golden question win support
 // ============================
 import { useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -40,44 +40,40 @@ const Game = () => {
   const [selectedCell, setSelectedCell] = useState<HexCell | null>(null);
   const [currentQuestion, setCurrentQuestion] = useState<{ question: string; answer: string; category: string } | null>(null);
   const [answerRevealed, setAnswerRevealed] = useState(false);
-  const [showPreQuestion, setShowPreQuestion] = useState(false);
-  const [pendingCell, setPendingCell] = useState<HexCell | null>(null);
+  const [showGameStartModal, setShowGameStartModal] = useState(true);
+  const [gameStarted, setGameStarted] = useState(false);
 
   const currentTurnColor = gameState.currentTurn === 'team1' ? team1Color : team2Color;
 
-  // Step 1: Click hex → show pre-question modal
+  // Dismiss the one-time game start modal
+  const handleGameStart = useCallback(() => {
+    setShowGameStartModal(false);
+    setGameStarted(true);
+  }, []);
+
+  // Click hex → show question directly (no per-question interceptor)
   const handleHexClick = useCallback((cell: HexCell) => {
-    if (!isHost || cell.status !== 'unclaimed' || gameState.winner) return;
+    if (!isHost || cell.status !== 'unclaimed' || gameState.winner || !gameStarted) return;
     sfx.playHexSelect();
-    setPendingCell(cell);
-    setShowPreQuestion(true);
-  }, [isHost, gameState.winner, sfx]);
 
-  // Step 2: Pre-question confirmed → show actual question
-  const handleShowQuestion = useCallback(() => {
-    if (!pendingCell) return;
-    setShowPreQuestion(false);
-
-    if (pendingCell.isGolden) {
+    if (cell.isGolden) {
       sfx.playGolden();
-      setSelectedCell(pendingCell);
+      setSelectedCell(cell);
       setCurrentQuestion({
         question: 'سؤال ذهبي! نقطة مجانية لأحد الفريقين',
         answer: 'اختر الفريق الذي يحصل على النقطة',
         category: 'سؤال ذهبي',
       });
       setAnswerRevealed(true);
-      setPendingCell(null);
       return;
     }
 
-    const q = getQuestionForLetter(pendingCell.letter);
-    setSelectedCell(pendingCell);
+    const q = getQuestionForLetter(cell.letter);
+    setSelectedCell(cell);
     setCurrentQuestion(q);
     setAnswerRevealed(false);
-    setPendingCell(null);
     setTimeout(() => sfx.playQuestionReveal(), 300);
-  }, [pendingCell, sfx]);
+  }, [isHost, gameState.winner, gameStarted, sfx]);
 
   const awardHex = useCallback((team: 'team1' | 'team2') => {
     if (!selectedCell) return;
@@ -172,10 +168,11 @@ const Game = () => {
         </motion.div>
       </div>
 
-      {/* Pre-question interceptor */}
+      {/* One-time game start modal */}
       <PreQuestionModal
-        isOpen={showPreQuestion}
-        onShowQuestion={handleShowQuestion}
+        isOpen={showGameStartModal}
+        onDismiss={handleGameStart}
+        isGameStart={true}
       />
 
       {/* Actual question modal */}
