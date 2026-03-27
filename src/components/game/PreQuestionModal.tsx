@@ -1,14 +1,15 @@
 // ============================
-// PreQuestionModal: Islamic reminder before showing the question
+// PreQuestionModal: Islamic reminder - shown once at game start OR before question
 // ============================
 import { motion, AnimatePresence } from "framer-motion";
 
 interface PreQuestionModalProps {
   isOpen: boolean;
-  onShowQuestion: () => void;
+  onDismiss: () => void;
+  isGameStart?: boolean;
 }
 
-const PreQuestionModal = ({ isOpen, onShowQuestion }: PreQuestionModalProps) => {
+const PreQuestionModal = ({ isOpen, onDismiss, isGameStart = false }: PreQuestionModalProps) => {
   return (
     <AnimatePresence>
       {isOpen && (
@@ -57,9 +58,9 @@ const PreQuestionModal = ({ isOpen, onShowQuestion }: PreQuestionModalProps) => 
               }}
               whileHover={{ scale: 1.05, boxShadow: '0 0 30px rgba(242,139,68,0.6)' }}
               whileTap={{ scale: 0.95 }}
-              onClick={onShowQuestion}
+              onClick={onDismiss}
             >
-              إظهار السؤال
+              {isGameStart ? 'ابدأ اللعب' : 'إظهار السؤال'}
             </motion.button>
           </motion.div>
         </motion.div>

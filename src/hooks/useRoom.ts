@@ -63,7 +63,7 @@ export function useRoom() {
         .from('rooms')
         .insert({
           pin,
-          host_id: user?.id || null,
+          host_id: user?.id ?? null,
           host_name: hostName,
           board: board as any,
         })
