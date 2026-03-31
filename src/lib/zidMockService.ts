@@ -23,7 +23,7 @@ export async function validateActivationCode(code: string): Promise<CodeValidati
   if (error) {
     return { valid: false, message: error.message };
   }
-  return data as CodeValidationResult;
+  return data as unknown as CodeValidationResult;
 }
 
 /**
