@@ -123,6 +123,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: '#1a3644' }}>
+      {/* Pattern overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/patterns/tribal-pattern.webp)',
+          backgroundSize: '300px',
+          backgroundRepeat: 'repeat',
+          opacity: 0.04,
+          mixBlendMode: 'soft-light',
+        }}
+      />
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 md:py-12 relative z-10">
         <motion.div className="mb-6 md:mb-10" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>
           <GameTitle hostName={hostName} editable onHostNameChange={setHostName} />
