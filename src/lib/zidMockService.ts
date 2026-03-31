@@ -1,39 +1,63 @@
 // ============================
-// Zid Mock Service: Validates game purchase & debug bypass
+// Zid Service: Validates activation codes via Supabase DB function
+// Debug codes and developer email bypass usage limits
 // ============================
+import { supabase } from "@/integrations/supabase/client";
 
-interface ZidValidationResult {
+interface CodeValidationResult {
   valid: boolean;
   message: string;
-  purchaseId?: string;
+  code_type?: string;
+  uses_remaining?: number;
 }
 
-// Mock database of valid purchases linked to emails
-const MOCK_PURCHASES: Record<string, { purchaseId: string; product: string }> = {
-  'team.rahal3@gmail.com': { purchaseId: 'ZID-UNLIMITED-001', product: 'خلية الحروف - نسخة غير محدودة' },
-  'host@rahaal.com': { purchaseId: 'ZID-2024-0042', product: 'خلية الحروف - رخصة سنوية' },
-};
-
-// Debug bypass codes for owner testing
-const UNLIMITED_CODES = ['RAHAAL2024', 'DEBUG-OWNER', 'KHALIYA-UNLIMITED'];
+const DEVELOPER_EMAIL = 'team.rahal3@gmail.com';
 
 /**
- * Validate a Zid store purchase by email
+ * Validate an activation code using the DB function (decrements uses)
  */
-export async function validateZidPurchase(email: string): Promise<ZidValidationResult> {
-  // Simulate API latency
-  await new Promise(r => setTimeout(r, 800));
-
-  const purchase = MOCK_PURCHASES[email.toLowerCase().trim()];
-  if (purchase) {
-    return { valid: true, message: `رخصة فعّالة: ${purchase.product}`, purchaseId: purchase.purchaseId };
+export async function validateActivationCode(code: string): Promise<CodeValidationResult> {
+  const { data, error } = await supabase.rpc('consume_activation_code', {
+    p_code: code.trim()
+  });
+  if (error) {
+    return { valid: false, message: error.message };
   }
-  return { valid: false, message: 'لا توجد رخصة مرتبطة بهذا الحساب. يرجى شراء اللعبة من متجر Zid.' };
+  return data as unknown as CodeValidationResult;
 }
 
 /**
- * Validate a debug/unlimited use code
+ * Check if the current user's email is the developer email
  */
+export async function isDeveloperEmail(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  return user?.email?.toLowerCase() === DEVELOPER_EMAIL;
+}
+
+/**
+ * Validate host access: checks activation code OR developer email
+ */
+export async function validateHostAccess(code: string): Promise<CodeValidationResult> {
+  // First check if user is developer by email
+  const isDev = await isDeveloperEmail();
+  if (isDev) {
+    return { valid: true, message: 'وصول مطوّر', code_type: 'DEBUG' };
+  }
+
+  // Then validate the code
+  return validateActivationCode(code);
+}
+
+// Legacy exports for backward compatibility
+export async function validateZidPurchase(email: string): Promise<{ valid: boolean; message: string; purchaseId?: string }> {
+  if (email.toLowerCase().trim() === DEVELOPER_EMAIL) {
+    return { valid: true, message: 'وصول مطوّر', purchaseId: 'DEV-ACCESS' };
+  }
+  return { valid: false, message: 'يرجى إدخال رمز التفعيل' };
+}
+
 export function validateDebugCode(code: string): boolean {
+  // Kept for sync checks; real validation is via DB
+  const UNLIMITED_CODES = ['RAHAAL2024', 'DEBUG-OWNER', 'KHALIYA-UNLIMITED'];
   return UNLIMITED_CODES.includes(code.toUpperCase().trim());
 }

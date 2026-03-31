@@ -123,6 +123,17 @@ const Index = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: '#1a3644' }}>
+      {/* Pattern overlay */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'url(/patterns/tribal-pattern.webp)',
+          backgroundSize: '300px',
+          backgroundRepeat: 'repeat',
+          opacity: 0.04,
+          mixBlendMode: 'soft-light',
+        }}
+      />
       <div className="flex-1 flex flex-col items-center justify-center px-4 py-8 md:py-12 relative z-10">
         <motion.div className="mb-6 md:mb-10" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2, duration: 0.8 }}>
           <GameTitle hostName={hostName} editable onHostNameChange={setHostName} />
@@ -202,22 +213,7 @@ const Index = () => {
                   </div>
                 </motion.div>
               )}
-              <button className="text-cream/30 hover:text-cream/50 text-xs font-tajawal transition-colors mt-2" onClick={() => setShowDebug(!showDebug)}>وضع المطوّر</button>
-              <AnimatePresence>
-                {showDebug && (
-                  <motion.div className="glass rounded-xl p-4" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}>
-                    <p className="text-cream/50 text-xs font-tajawal mb-2">رمز الاستخدام غير المحدود (Debug)</p>
-                    <p className="text-cream/30 text-xs font-tajawal mb-2" dir="ltr">الرموز: RAHAAL2024 | DEBUG-OWNER | KHALIYA-UNLIMITED</p>
-                    <div className="flex gap-2">
-                      <input type="text" value={debugCode} onChange={(e) => setDebugCode(e.target.value)} placeholder="أدخل الرمز"
-                        className="flex-1 rounded-lg px-3 py-2 text-sm font-tajawal focus:outline-none"
-                        style={{ backgroundColor: 'rgba(26,54,68,0.5)', border: '1px solid rgba(255,255,255,0.1)', color: 'hsl(var(--cream))' }} dir="ltr" />
-                      <button className="px-4 py-2 rounded-lg text-sm font-tajawal font-bold"
-                        style={{ background: 'linear-gradient(135deg, #4a80e8, #3668c0)', color: '#fff' }} onClick={handleDebugBypass}>تحقق</button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {/* Developer mode removed - debug access is now via activation codes or developer email only */}
               <motion.button className="text-cream/40 hover:text-cream/60 text-sm font-tajawal transition-colors" onClick={() => navigate("/about")}>من نحن؟</motion.button>
             </motion.div>
           </>

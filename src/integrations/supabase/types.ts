@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      activation_codes: {
+        Row: {
+          code: string
+          code_type: Database["public"]["Enums"]["code_type"]
+          created_at: string
+          created_by: string | null
+          id: string
+          linked_email: string | null
+          room_id: string | null
+          uses_remaining: number
+        }
+        Insert: {
+          code: string
+          code_type?: Database["public"]["Enums"]["code_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_email?: string | null
+          room_id?: string | null
+          uses_remaining?: number
+        }
+        Update: {
+          code?: string
+          code_type?: Database["public"]["Enums"]["code_type"]
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          linked_email?: string | null
+          room_id?: string | null
+          uses_remaining?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activation_codes_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       players: {
         Row: {
           avatar_url: string | null
@@ -54,6 +95,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          is_developer: boolean | null
+          purchase_code: string | null
+          purchase_verified: boolean | null
+          user_id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_developer?: boolean | null
+          purchase_code?: string | null
+          purchase_verified?: boolean | null
+          user_id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          display_name?: string | null
+          id?: string
+          is_developer?: boolean | null
+          purchase_code?: string | null
+          purchase_verified?: boolean | null
+          user_id?: string
+        }
+        Relationships: []
       }
       rooms: {
         Row: {
@@ -126,10 +200,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      consume_activation_code: { Args: { p_code: string }; Returns: Json }
     }
     Enums: {
-      [_ in never]: never
+      code_type: "HOST" | "PLAYER" | "DEBUG"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -256,6 +330,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      code_type: ["HOST", "PLAYER", "DEBUG"],
+    },
   },
 } as const
