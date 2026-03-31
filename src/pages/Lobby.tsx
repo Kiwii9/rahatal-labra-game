@@ -65,8 +65,9 @@ const Lobby = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
-      <div className="flex-1 flex items-center justify-center p-4">
+    <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: 'hsl(195, 42%, 18%)' }}>
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'url(/patterns/tribal-pattern.webp)', backgroundSize: '300px', backgroundRepeat: 'repeat', opacity: 0.04, mixBlendMode: 'soft-light' }} />
+      <div className="flex-1 flex items-center justify-center p-4 relative z-10">
         <motion.div
           className="glass rounded-2xl p-6 md:p-8 max-w-2xl w-full"
           initial={{ opacity: 0, scale: 0.9 }}
