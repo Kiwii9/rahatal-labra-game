@@ -59,7 +59,7 @@ const Index = () => {
     setAuthLoading(provider);
     setAuthError("");
     try {
-      const { error } = await lovable.auth.signInWithOAuth(provider, {
+      const { error } = await lovable.auth.signInWithOAuth(provider as "google" | "apple", {
         redirect_uri: window.location.origin,
       });
       if (error) {
