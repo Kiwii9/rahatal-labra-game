@@ -29,27 +29,47 @@ const Index = () => {
 
   // Check if already logged in on mount & listen for auth changes
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Dev-only: log debug codes to console (NEVER show in UI placeholders)
+    if (import.meta.env.DEV) {
+      // eslint-disable-next-line no-console
+      console.groupCollapsed('%c🛠 Rahhal · Debug Activation Codes', 'color:#f28b44;font-weight:bold');
+      // eslint-disable-next-line no-console
+      console.table([
+        { code: 'RAHAAL2024', type: 'DEBUG' },
+        { code: 'TESTHOST001', type: 'HOST (test)' },
+        { code: 'TESTGUEST002', type: 'PLAYER (test)' },
+        { code: 'ADMIN_TEST', type: 'DEBUG' },
+        { code: 'DEBUG_ROOM_001', type: 'DEBUG' },
+        { code: 'QUICKTEST123', type: 'DEBUG' },
+      ]);
+      // eslint-disable-next-line no-console
+      console.info('These codes are for development only. Remove before production.');
+      // eslint-disable-next-line no-console
+      console.groupEnd();
+    }
+
+    const checkProfile = async (userId: string, userEmail?: string | null) => {
+      // Use maybeSingle to avoid 406 when no profile row exists yet
+      const { data: profile } = await (supabase as any)
+        .from('profiles').select('*').eq('user_id', userId).maybeSingle();
+      // Developer email is auto-verified by DB trigger
+      if (profile?.purchase_verified || userEmail === 'team.rahal3@gmail.com') {
+        navigate("/lobby");
+      } else {
+        setShowPurchaseValidation(true);
+      }
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const { data: profile } = await (supabase as any)
-          .from('profiles').select('*').eq('user_id', session.user.id).single();
-        if ((profile as any)?.purchase_verified) {
-          navigate("/lobby");
-        } else {
-          setShowPurchaseValidation(true);
-        }
+        // Defer to avoid deadlock with onAuthStateChange callback
+        setTimeout(() => checkProfile(session.user.id, session.user.email), 0);
       }
     });
     // Check existing session
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        const { data: profile } = await (supabase as any)
-          .from('profiles').select('*').eq('user_id', session.user.id).single();
-        if ((profile as any)?.purchase_verified) {
-          navigate("/lobby");
-        } else if (profile) {
-          setShowPurchaseValidation(true);
-        }
+        checkProfile(session.user.id, session.user.email);
       }
     });
     return () => subscription.unsubscribe();
@@ -150,9 +170,16 @@ const Index = () => {
           <motion.div className="w-full max-w-sm glass rounded-2xl p-6 mb-6" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <h3 className="text-cream text-lg font-tajawal font-bold mb-3 text-center">تحقق من رمز الشراء</h3>
             <p className="text-cream/50 text-sm font-tajawal mb-4 text-center">أدخل رمز الشراء من متجر Zid أو رمز المطوّر</p>
-            <input value={purchaseCode} onChange={(e) => setPurchaseCode(e.target.value)} placeholder="RAHAAL2024"
-              className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none mb-3"
-              style={{ backgroundColor: 'rgba(26,54,68,0.6)', borderColor: 'rgba(242,139,68,0.3)', color: 'hsl(var(--cream))' }} dir="ltr" />
+            <input
+              type="password"
+              autoComplete="off"
+              value={purchaseCode}
+              onChange={(e) => setPurchaseCode(e.target.value.toUpperCase())}
+              placeholder="أدخل رمز التفعيل"
+              className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none mb-1 tracking-[0.4em]"
+              style={{ backgroundColor: 'rgba(26,54,68,0.6)', borderColor: 'rgba(242,139,68,0.3)', color: 'hsl(var(--cream))' }} dir="ltr"
+            />
+            <p className="text-cream/40 text-xs font-tajawal text-center mb-3">{purchaseCode.length} حرفاً</p>
             <motion.button className="w-full py-3 rounded-xl font-tajawal font-bold text-white"
               style={{ background: 'linear-gradient(135deg, #f28b44, #e07030)' }} whileTap={{ scale: 0.97 }} onClick={handlePurchaseValidation}>
               تحقق وابدأ
