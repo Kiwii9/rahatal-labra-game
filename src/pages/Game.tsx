@@ -161,6 +161,7 @@ const Game = () => {
             {isHost ? 'اختر خلية لعرض السؤال' : 'في انتظار المضيف...'}
           </motion.div>
         )}
+      </div>
 
       {/* One-time game start modal */}
       <PreQuestionModal
