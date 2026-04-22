@@ -143,6 +143,7 @@ export type Database = {
           id: string
           pin: string
           rebound_expires_at: string | null
+          room_code: string | null
           status: string
           team1_color: string
           team1_name: string
@@ -164,6 +165,7 @@ export type Database = {
           id?: string
           pin: string
           rebound_expires_at?: string | null
+          room_code?: string | null
           status?: string
           team1_color?: string
           team1_name?: string
@@ -185,6 +187,7 @@ export type Database = {
           id?: string
           pin?: string
           rebound_expires_at?: string | null
+          room_code?: string | null
           status?: string
           team1_color?: string
           team1_name?: string
@@ -201,6 +204,7 @@ export type Database = {
     }
     Functions: {
       consume_activation_code: { Args: { p_code: string }; Returns: Json }
+      generate_room_code: { Args: never; Returns: string }
     }
     Enums: {
       code_type: "HOST" | "PLAYER" | "DEBUG"

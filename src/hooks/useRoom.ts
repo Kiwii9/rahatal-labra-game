@@ -10,6 +10,7 @@ export type BuzzerState = 'idle' | 'open' | 'locked' | 'rebound' | 'cooldown';
 export interface RoomData {
   id: string;
   pin: string;
+  room_code?: string | null;
   host_id: string | null;
   host_name: string;
   status: string;
@@ -44,6 +45,16 @@ function generatePin(): string {
   return String(Math.floor(100000 + Math.random() * 900000));
 }
 
+// Generate readable 8-char code (no ambiguous chars: 0/O, 1/I)
+function generateRoomCode(): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let result = '';
+  for (let i = 0; i < 8; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 export function useRoom() {
   const [room, setRoom] = useState<RoomData | null>(null);
   const [players, setPlayers] = useState<PlayerData[]>([]);
@@ -57,20 +68,34 @@ export function useRoom() {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       const pin = generatePin();
+      const room_code = generateRoomCode();
       const board = generateBoard();
 
       const { data, error: err } = await supabase
         .from('rooms')
         .insert({
           pin,
+          room_code,
           host_id: user?.id ?? null,
           host_name: hostName,
           board: board as any,
-        })
+        } as any)
         .select()
         .single();
 
       if (err) throw err;
+      // Also create a PLAYER activation code linked to this room (3 uses)
+      try {
+        await (supabase as any).from('activation_codes').insert({
+          code: room_code,
+          code_type: 'PLAYER',
+          uses_remaining: 3,
+          room_id: (data as any).id,
+          created_by: user?.id ?? null,
+        });
+      } catch {
+        // Non-fatal; host can still proceed
+      }
       setRoom(data as unknown as RoomData);
       return data as unknown as RoomData;
     } catch (e: any) {

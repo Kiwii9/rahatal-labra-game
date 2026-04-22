@@ -143,13 +143,17 @@ const GuestJoin = () => {
                 <h2 className="text-2xl font-tajawal font-[900] text-cream">أدخل رمز الدخول</h2>
                 <p className="text-cream/50 font-tajawal text-sm">رمز الغرفة: {pin}</p>
                 <input
+                  type="password"
+                  autoComplete="off"
                   value={activationCode}
-                  onChange={(e) => setActivationCode(e.target.value)}
+                  onChange={(e) => setActivationCode(e.target.value.toUpperCase())}
                   placeholder="أدخل رمز التفعيل"
-                  className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none"
+                  className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none tracking-[0.4em]"
                   style={{ backgroundColor: 'hsla(195, 42%, 18%, 0.6)', borderColor: 'hsla(25, 87%, 61%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
                   dir="ltr"
+                  maxLength={20}
                 />
+                <p className="text-cream/40 text-xs font-tajawal -mt-3">{activationCode.length} حرفاً</p>
                 <motion.button
                   className="w-full py-4 rounded-xl font-tajawal font-bold text-xl text-white"
                   style={{ background: 'linear-gradient(135deg, hsl(25, 87%, 61%), hsl(25, 87%, 50%))' }}
