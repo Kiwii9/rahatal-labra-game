@@ -117,6 +117,39 @@ const Lobby = () => {
                 </div>
               </div>
 
+              {/* Player activation code (host-visible only, copyable) */}
+              {(room as any).room_code && (
+                <div
+                  className="rounded-xl p-4"
+                  style={{ backgroundColor: 'hsla(48, 96%, 53%, 0.08)', border: '1px solid hsla(48, 96%, 53%, 0.3)' }}
+                >
+                  <div className="flex items-center justify-between gap-3 flex-wrap">
+                    <div className="text-right">
+                      <p className="text-cream/70 text-sm font-tajawal mb-1">🔑 رمز تفعيل اللاعبين (٣ استخدامات)</p>
+                      <p className="text-cream/40 text-xs font-tajawal">شارك هذا الرمز مع لاعبيك فقط</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <code
+                        className="text-2xl font-tajawal font-[900] tracking-[0.3em] px-4 py-2 rounded-lg"
+                        style={{ color: 'hsl(48, 96%, 60%)', backgroundColor: 'hsla(48, 96%, 53%, 0.1)' }}
+                        dir="ltr"
+                      >
+                        {(room as any).room_code}
+                      </code>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText((room as any).room_code);
+                        }}
+                        className="px-3 py-2 rounded-lg font-tajawal text-sm text-white"
+                        style={{ background: 'linear-gradient(135deg, hsl(48, 96%, 53%), hsl(48, 96%, 43%))' }}
+                      >
+                        نسخ
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Host name */}
               <div>
                 <label className="text-cream/60 text-sm font-tajawal block mb-1">اسم المضيف</label>
