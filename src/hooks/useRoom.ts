@@ -84,18 +84,9 @@ export function useRoom() {
         .single();
 
       if (err) throw err;
-      // Also create a PLAYER activation code linked to this room (3 uses)
-      try {
-        await (supabase as any).from('activation_codes').insert({
-          code: room_code,
-          code_type: 'PLAYER',
-          uses_remaining: 3,
-          room_id: (data as any).id,
-          created_by: user?.id ?? null,
-        });
-      } catch {
-        // Non-fatal; host can still proceed
-      }
+      // Note: no separate PLAYER activation_code is created.
+      // The room_code itself is the join code (unlimited uses, expires when
+      // the host closes the room or after 24h — enforced in GuestJoin).
       setRoom(data as unknown as RoomData);
       return data as unknown as RoomData;
     } catch (e: any) {

@@ -125,8 +125,8 @@ const Lobby = () => {
                 >
                   <div className="flex items-center justify-between gap-3 flex-wrap">
                     <div className="text-right">
-                      <p className="text-cream/70 text-sm font-tajawal mb-1">🔑 رمز تفعيل اللاعبين (٣ استخدامات)</p>
-                      <p className="text-cream/40 text-xs font-tajawal">شارك هذا الرمز مع لاعبيك فقط</p>
+                      <p className="text-cream/70 text-sm font-tajawal mb-1">🔑 رمز الغرفة للاعبين</p>
+                      <p className="text-cream/40 text-xs font-tajawal">استخدامات غير محدودة • ينتهي بعد ٢٤ ساعة أو عند إغلاق الغرفة</p>
                     </div>
                     <div className="flex items-center gap-2">
                       <code

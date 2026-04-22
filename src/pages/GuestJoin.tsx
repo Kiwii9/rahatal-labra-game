@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import GameFooter from "@/components/game/GameFooter";
 
-const AVATARS = ['🦁', '🦅', '🐺', '🦊', '🐻', '🦈', '🐲', '🦄'];
+const AVATARS = ['🦁', '🦅', '🐺', '🦊', '🐻', '🦈', '🐲', '🦄', '🐯', '🦉', '🐧', '🐙'];
 
 const GuestJoin = () => {
   const navigate = useNavigate();
@@ -25,22 +25,36 @@ const GuestJoin = () => {
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
   const [codeLoading, setCodeLoading] = useState(false);
 
-  // Validate player activation code
+  // Validate room code: lookup room by code, enforce 24h expiry & open status
   const handleCodeValidation = async () => {
-    if (!activationCode.trim()) return;
+    const code = activationCode.trim().toUpperCase();
+    if (!code) return;
     setCodeLoading(true);
     setError("");
     try {
-      const { data, error: err } = await supabase.rpc('consume_activation_code', {
-        p_code: activationCode.trim()
-      });
+      const { data, error: err } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('room_code', code)
+        .maybeSingle();
       if (err) throw err;
-      const result = data as any;
-      if (result?.valid) {
-        setStep('team');
-      } else {
-        setError(result?.message || 'رمز غير صالح');
+      if (!data) {
+        setError('رمز الغرفة غير صحيح');
+        return;
       }
+      // Closed?
+      if ((data as any).status === 'closed' || (data as any).status === 'ended') {
+        setError('تم إغلاق هذه الغرفة');
+        return;
+      }
+      // 24h expiry from created_at
+      const createdAt = new Date((data as any).created_at).getTime();
+      if (Date.now() - createdAt > 24 * 60 * 60 * 1000) {
+        setError('انتهت صلاحية رمز الغرفة (٢٤ ساعة)');
+        return;
+      }
+      setRoomData(data);
+      setStep('team');
     } catch (e: any) {
       setError(e.message || 'حدث خطأ في التحقق');
     } finally {
@@ -48,15 +62,9 @@ const GuestJoin = () => {
     }
   };
 
-  const handleTeamSelect = async (team: 'team1' | 'team2') => {
+  const handleTeamSelect = (team: 'team1' | 'team2') => {
     setSelectedTeam(team);
-    const { data } = await supabase.from('rooms').select('*').eq('pin', pin).single();
-    if (data) {
-      setRoomData(data);
-      setStep('details');
-    } else {
-      setError('الغرفة غير موجودة');
-    }
+    setStep('details');
   };
 
   const handleJoin = async () => {
@@ -224,6 +232,31 @@ const GuestJoin = () => {
                       </button>
                     ))}
                   </div>
+                  {/* Upload custom avatar */}
+                  <label className="mt-3 inline-block cursor-pointer text-cream/60 font-tajawal text-xs underline">
+                    أو ارفع صورتك الخاصة
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 1024 * 1024) {
+                          setError('حجم الصورة يجب أن يكون أقل من 1MB');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setSelectedAvatar(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                  {selectedAvatar.startsWith('data:') && (
+                    <div className="mt-2 flex justify-center">
+                      <img src={selectedAvatar} alt="avatar preview" className="w-16 h-16 rounded-full object-cover ring-2 ring-primary" />
+                    </div>
+                  )}
                 </div>
                 <motion.button
                   className="w-full py-4 rounded-xl font-tajawal font-bold text-xl text-white"
@@ -286,7 +319,9 @@ const GuestJoin = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
                           >
-                            <span className="text-2xl">{p.avatar_url || '👤'}</span>
+                            {p.avatar_url?.startsWith('data:')
+                              ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              : <span className="text-2xl">{p.avatar_url || '👤'}</span>}
                             <span className="text-cream/80 text-xs font-tajawal">{p.name}</span>
                           </motion.div>
                         ))}
@@ -308,7 +343,9 @@ const GuestJoin = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
                           >
-                            <span className="text-2xl">{p.avatar_url || '👤'}</span>
+                            {p.avatar_url?.startsWith('data:')
+                              ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              : <span className="text-2xl">{p.avatar_url || '👤'}</span>}
                             <span className="text-cream/80 text-xs font-tajawal">{p.name}</span>
                           </motion.div>
                         ))}
