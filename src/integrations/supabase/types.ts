@@ -20,6 +20,7 @@ export type Database = {
           code_type: Database["public"]["Enums"]["code_type"]
           created_at: string
           created_by: string | null
+          expires_at: string | null
           id: string
           linked_email: string | null
           room_id: string | null
@@ -30,6 +31,7 @@ export type Database = {
           code_type?: Database["public"]["Enums"]["code_type"]
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           id?: string
           linked_email?: string | null
           room_id?: string | null
@@ -40,6 +42,7 @@ export type Database = {
           code_type?: Database["public"]["Enums"]["code_type"]
           created_at?: string
           created_by?: string | null
+          expires_at?: string | null
           id?: string
           linked_email?: string | null
           room_id?: string | null
@@ -51,6 +54,41 @@ export type Database = {
             columns: ["room_id"]
             isOneToOne: false
             referencedRelation: "rooms"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      code_redemptions: {
+        Row: {
+          code_id: string
+          email: string | null
+          id: string
+          provider: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          email?: string | null
+          id?: string
+          provider: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          email?: string | null
+          id?: string
+          provider?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "code_redemptions_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "activation_codes"
             referencedColumns: ["id"]
           },
         ]
