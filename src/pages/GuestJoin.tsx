@@ -25,22 +25,36 @@ const GuestJoin = () => {
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
   const [codeLoading, setCodeLoading] = useState(false);
 
-  // Validate player activation code
+  // Validate room code: lookup room by code, enforce 24h expiry & open status
   const handleCodeValidation = async () => {
-    if (!activationCode.trim()) return;
+    const code = activationCode.trim().toUpperCase();
+    if (!code) return;
     setCodeLoading(true);
     setError("");
     try {
-      const { data, error: err } = await supabase.rpc('consume_activation_code', {
-        p_code: activationCode.trim()
-      });
+      const { data, error: err } = await supabase
+        .from('rooms')
+        .select('*')
+        .eq('room_code', code)
+        .maybeSingle();
       if (err) throw err;
-      const result = data as any;
-      if (result?.valid) {
-        setStep('team');
-      } else {
-        setError(result?.message || 'رمز غير صالح');
+      if (!data) {
+        setError('رمز الغرفة غير صحيح');
+        return;
       }
+      // Closed?
+      if ((data as any).status === 'closed' || (data as any).status === 'ended') {
+        setError('تم إغلاق هذه الغرفة');
+        return;
+      }
+      // 24h expiry from created_at
+      const createdAt = new Date((data as any).created_at).getTime();
+      if (Date.now() - createdAt > 24 * 60 * 60 * 1000) {
+        setError('انتهت صلاحية رمز الغرفة (٢٤ ساعة)');
+        return;
+      }
+      setRoomData(data);
+      setStep('team');
     } catch (e: any) {
       setError(e.message || 'حدث خطأ في التحقق');
     } finally {
@@ -48,15 +62,9 @@ const GuestJoin = () => {
     }
   };
 
-  const handleTeamSelect = async (team: 'team1' | 'team2') => {
+  const handleTeamSelect = (team: 'team1' | 'team2') => {
     setSelectedTeam(team);
-    const { data } = await supabase.from('rooms').select('*').eq('pin', pin).single();
-    if (data) {
-      setRoomData(data);
-      setStep('details');
-    } else {
-      setError('الغرفة غير موجودة');
-    }
+    setStep('details');
   };
 
   const handleJoin = async () => {
