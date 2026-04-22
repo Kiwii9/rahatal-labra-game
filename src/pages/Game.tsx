@@ -91,10 +91,10 @@ const Game = () => {
 
       if (hasWinner) setTimeout(() => sfx.playWin(), 500);
 
+      // No turn rotation — host decides freely who answered first
       return {
         ...prev,
         board: finalBoard,
-        currentTurn: prev.currentTurn === 'team1' ? 'team2' : 'team1',
         winner: hasWinner ? team : null,
         winningPath: winPath || [],
         team1Score: team === 'team1' ? prev.team1Score + 1 : prev.team1Score,
@@ -108,7 +108,7 @@ const Game = () => {
 
   const handleWrong = useCallback(() => {
     sfx.playWrong();
-    setGameState(prev => ({ ...prev, currentTurn: prev.currentTurn === 'team1' ? 'team2' : 'team1' }));
+    // No turn switch — neither team scored, host moves on
     setSelectedCell(null);
     setCurrentQuestion(null);
   }, [sfx]);
@@ -151,22 +151,16 @@ const Game = () => {
           </div>
         </div>
 
-        {/* Turn indicator */}
-        <motion.div
-          className="text-center py-2 font-tajawal font-bold text-base md:text-lg"
-          style={{ color: turnColor }}
-          key={gameState.currentTurn}
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
-          {!gameState.winner && (
-            <>
-              الدور الآن: {currentTeamName}
-              {!isHost && <span className="text-cream/40 text-sm mr-2"> (في انتظار المضيف...)</span>}
-            </>
-          )}
-        </motion.div>
-      </div>
+        {/* Status indicator — no turns; just prompt host */}
+        {!gameState.winner && (
+          <motion.div
+            className="text-center py-2 font-tajawal font-bold text-base md:text-lg text-cream/70"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            {isHost ? 'اختر خلية لعرض السؤال' : 'في انتظار المضيف...'}
+          </motion.div>
+        )}
 
       {/* One-time game start modal */}
       <PreQuestionModal

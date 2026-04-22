@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import GameFooter from "@/components/game/GameFooter";
 
-const AVATARS = ['🦁', '🦅', '🐺', '🦊', '🐻', '🦈', '🐲', '🦄'];
+const AVATARS = ['🦁', '🦅', '🐺', '🦊', '🐻', '🦈', '🐲', '🦄', '🐯', '🦉', '🐧', '🐙'];
 
 const GuestJoin = () => {
   const navigate = useNavigate();
@@ -232,6 +232,31 @@ const GuestJoin = () => {
                       </button>
                     ))}
                   </div>
+                  {/* Upload custom avatar */}
+                  <label className="mt-3 inline-block cursor-pointer text-cream/60 font-tajawal text-xs underline">
+                    أو ارفع صورتك الخاصة
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        if (file.size > 1024 * 1024) {
+                          setError('حجم الصورة يجب أن يكون أقل من 1MB');
+                          return;
+                        }
+                        const reader = new FileReader();
+                        reader.onload = () => setSelectedAvatar(reader.result as string);
+                        reader.readAsDataURL(file);
+                      }}
+                    />
+                  </label>
+                  {selectedAvatar.startsWith('data:') && (
+                    <div className="mt-2 flex justify-center">
+                      <img src={selectedAvatar} alt="avatar preview" className="w-16 h-16 rounded-full object-cover ring-2 ring-primary" />
+                    </div>
+                  )}
                 </div>
                 <motion.button
                   className="w-full py-4 rounded-xl font-tajawal font-bold text-xl text-white"
@@ -294,7 +319,9 @@ const GuestJoin = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
                           >
-                            <span className="text-2xl">{p.avatar_url || '👤'}</span>
+                            {p.avatar_url?.startsWith('data:')
+                              ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              : <span className="text-2xl">{p.avatar_url || '👤'}</span>}
                             <span className="text-cream/80 text-xs font-tajawal">{p.name}</span>
                           </motion.div>
                         ))}
@@ -316,7 +343,9 @@ const GuestJoin = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: i * 0.1 }}
                           >
-                            <span className="text-2xl">{p.avatar_url || '👤'}</span>
+                            {p.avatar_url?.startsWith('data:')
+                              ? <img src={p.avatar_url} alt="" className="w-8 h-8 rounded-full object-cover" />
+                              : <span className="text-2xl">{p.avatar_url || '👤'}</span>}
                             <span className="text-cream/80 text-xs font-tajawal">{p.name}</span>
                           </motion.div>
                         ))}
