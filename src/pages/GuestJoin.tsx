@@ -1,6 +1,6 @@
 // ============================
-// GuestJoin: Guest registration flow - team selection, name, avatar, activation code
-// Then waiting room with realtime connected players
+// GuestJoin: Single room-code flow → team → details → waiting room
+// One unified code (rooms.room_code), valid until host closes or 24h passes.
 // ============================
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
@@ -13,10 +13,11 @@ const AVATARS = ['🦁', '🦅', '🐺', '🦊', '🐻', '🦈', '🐲', '🦄',
 const GuestJoin = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const pin = searchParams.get("pin") || "";
+  // Accept code from URL (?code=...) — legacy ?pin= also accepted as a fallback.
+  const initialCode = (searchParams.get("code") || searchParams.get("pin") || "").toUpperCase();
 
   const [step, setStep] = useState<'code' | 'team' | 'details' | 'waiting'>('code');
-  const [activationCode, setActivationCode] = useState("");
+  const [roomCode, setRoomCode] = useState(initialCode);
   const [selectedTeam, setSelectedTeam] = useState<'team1' | 'team2' | null>(null);
   const [playerName, setPlayerName] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
@@ -25,9 +26,9 @@ const GuestJoin = () => {
   const [connectedPlayers, setConnectedPlayers] = useState<any[]>([]);
   const [codeLoading, setCodeLoading] = useState(false);
 
-  // Validate room code: lookup room by code, enforce 24h expiry & open status
-  const handleCodeValidation = async () => {
-    const code = activationCode.trim().toUpperCase();
+  // Validate the unified room code
+  const validateRoomCode = async (codeRaw: string) => {
+    const code = codeRaw.trim().toUpperCase();
     if (!code) return;
     setCodeLoading(true);
     setError("");
@@ -42,12 +43,10 @@ const GuestJoin = () => {
         setError('رمز الغرفة غير صحيح');
         return;
       }
-      // Closed?
       if ((data as any).status === 'closed' || (data as any).status === 'ended') {
         setError('تم إغلاق هذه الغرفة');
         return;
       }
-      // 24h expiry from created_at
       const createdAt = new Date((data as any).created_at).getTime();
       if (Date.now() - createdAt > 24 * 60 * 60 * 1000) {
         setError('انتهت صلاحية رمز الغرفة (٢٤ ساعة)');
@@ -61,6 +60,14 @@ const GuestJoin = () => {
       setCodeLoading(false);
     }
   };
+
+  // Auto-validate if code came in via URL
+  useEffect(() => {
+    if (initialCode && initialCode.length >= 6) {
+      validateRoomCode(initialCode);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleTeamSelect = (team: 'team1' | 'team2') => {
     setSelectedTeam(team);
@@ -85,11 +92,10 @@ const GuestJoin = () => {
     }
   };
 
-  // Realtime: listen for players joining and game start
+  // Realtime: players + game start
   useEffect(() => {
     if (!roomData?.id) return;
 
-    // Fetch initial players
     supabase.from('players').select('*').eq('room_id', roomData.id).then(({ data }) => {
       if (data) setConnectedPlayers(data);
     });
@@ -101,7 +107,6 @@ const GuestJoin = () => {
         table: 'players',
         filter: `room_id=eq.${roomData.id}`,
       }, () => {
-        // Refetch all players on any change
         supabase.from('players').select('*').eq('room_id', roomData.id).then(({ data }) => {
           if (data) setConnectedPlayers(data);
         });
@@ -126,7 +131,6 @@ const GuestJoin = () => {
 
   return (
     <div className="min-h-screen flex flex-col relative overflow-hidden" style={{ backgroundColor: 'hsl(195, 42%, 18%)' }}>
-      {/* Pattern overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
@@ -144,32 +148,31 @@ const GuestJoin = () => {
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
         >
-          {/* Step 1: Activation Code */}
           <AnimatePresence mode="wait">
+            {/* Step 1: Room Code (only shown if no valid URL code) */}
             {step === 'code' && (
               <motion.div key="code" className="space-y-6 text-center" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
-                <h2 className="text-2xl font-tajawal font-[900] text-cream">أدخل رمز الدخول</h2>
-                <p className="text-cream/50 font-tajawal text-sm">رمز الغرفة: {pin}</p>
+                <h2 className="text-2xl font-tajawal font-[900] text-cream">أدخل رمز الغرفة</h2>
+                <p className="text-cream/50 font-tajawal text-sm">احصل على الرمز من المضيف</p>
                 <input
-                  type="password"
+                  type="text"
                   autoComplete="off"
-                  value={activationCode}
-                  onChange={(e) => setActivationCode(e.target.value.toUpperCase())}
-                  placeholder="أدخل رمز التفعيل"
-                  className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none tracking-[0.4em]"
+                  value={roomCode}
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                  placeholder="ABCD2345"
+                  className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none tracking-[0.4em] text-2xl"
                   style={{ backgroundColor: 'hsla(195, 42%, 18%, 0.6)', borderColor: 'hsla(25, 87%, 61%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
                   dir="ltr"
-                  maxLength={20}
+                  maxLength={8}
                 />
-                <p className="text-cream/40 text-xs font-tajawal -mt-3">{activationCode.length} حرفاً</p>
                 <motion.button
                   className="w-full py-4 rounded-xl font-tajawal font-bold text-xl text-white"
                   style={{ background: 'linear-gradient(135deg, hsl(25, 87%, 61%), hsl(25, 87%, 50%))' }}
                   whileTap={{ scale: 0.97 }}
-                  onClick={handleCodeValidation}
-                  disabled={codeLoading || !activationCode.trim()}
+                  onClick={() => validateRoomCode(roomCode)}
+                  disabled={codeLoading || !roomCode.trim()}
                 >
-                  {codeLoading ? 'جاري التحقق...' : 'تحقق'}
+                  {codeLoading ? 'جاري التحقق...' : 'دخول'}
                 </motion.button>
                 {error && <p className="text-red-400 font-tajawal text-sm">{error}</p>}
               </motion.div>
@@ -179,7 +182,7 @@ const GuestJoin = () => {
             {step === 'team' && (
               <motion.div key="team" className="space-y-6 text-center" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                 <h2 className="text-2xl font-tajawal font-[900] text-cream">اختر فريقك</h2>
-                <p className="text-cream/50 font-tajawal text-sm">رمز الغرفة: {pin}</p>
+                <p className="text-cream/50 font-tajawal text-sm">رمز الغرفة: {roomData?.room_code}</p>
                 <div className="grid grid-cols-2 gap-4">
                   <motion.button
                     className="py-8 rounded-xl font-tajawal font-bold text-xl text-white"
@@ -188,9 +191,7 @@ const GuestJoin = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleTeamSelect('team1')}
                   >
-                    الفريق الأول
-                    <br />
-                    <span className="text-sm opacity-70">أعلى ↔ أسفل</span>
+                    {roomData?.team1_name || 'الفريق الأول'}
                   </motion.button>
                   <motion.button
                     className="py-8 rounded-xl font-tajawal font-bold text-xl text-white"
@@ -199,9 +200,7 @@ const GuestJoin = () => {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => handleTeamSelect('team2')}
                   >
-                    الفريق الثاني
-                    <br />
-                    <span className="text-sm opacity-70">يمين ↔ يسار</span>
+                    {roomData?.team2_name || 'الفريق الثاني'}
                   </motion.button>
                 </div>
                 {error && <p className="text-red-400 font-tajawal text-sm">{error}</p>}
@@ -232,7 +231,6 @@ const GuestJoin = () => {
                       </button>
                     ))}
                   </div>
-                  {/* Upload custom avatar */}
                   <label className="mt-3 inline-block cursor-pointer text-cream/60 font-tajawal text-xs underline">
                     أو ارفع صورتك الخاصة
                     <input
@@ -271,7 +269,7 @@ const GuestJoin = () => {
               </motion.div>
             )}
 
-            {/* Step 4: Waiting room with realtime players */}
+            {/* Step 4: Waiting room */}
             {step === 'waiting' && (
               <motion.div key="waiting" className="text-center space-y-6" initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}>
                 <motion.div
@@ -279,7 +277,9 @@ const GuestJoin = () => {
                   animate={{ scale: [1, 1.15, 1], rotate: [0, 5, -5, 0] }}
                   transition={{ repeat: Infinity, duration: 3, ease: 'easeInOut' }}
                 >
-                  {selectedAvatar}
+                  {selectedAvatar.startsWith('data:')
+                    ? <img src={selectedAvatar} alt="" className="w-20 h-20 rounded-full object-cover mx-auto" />
+                    : selectedAvatar}
                 </motion.div>
                 <h2 className="text-2xl font-tajawal font-[900] text-cream">مرحباً {playerName}!</h2>
                 <motion.p
@@ -290,7 +290,6 @@ const GuestJoin = () => {
                   في انتظار بدء اللعبة من المضيف...
                 </motion.p>
 
-                {/* Team badge */}
                 <div
                   className="inline-block px-4 py-2 rounded-full font-tajawal font-bold"
                   style={{
@@ -298,17 +297,15 @@ const GuestJoin = () => {
                     color: selectedTeam === 'team1' ? 'hsl(25, 87%, 61%)' : 'hsl(222, 78%, 60%)',
                   }}
                 >
-                  {selectedTeam === 'team1' ? 'الفريق الأول' : 'الفريق الثاني'}
+                  {selectedTeam === 'team1' ? (roomData?.team1_name || 'الفريق الأول') : (roomData?.team2_name || 'الفريق الثاني')}
                 </div>
 
-                {/* Realtime connected players */}
                 <div className="space-y-4 mt-4">
                   <p className="text-cream/60 font-tajawal text-sm">اللاعبون المتصلون ({connectedPlayers.length})</p>
 
-                  {/* Team 1 players */}
                   {team1Players.length > 0 && (
                     <div>
-                      <p className="text-sm font-tajawal font-bold mb-2" style={{ color: 'hsl(25, 87%, 61%)' }}>الفريق الأول</p>
+                      <p className="text-sm font-tajawal font-bold mb-2" style={{ color: 'hsl(25, 87%, 61%)' }}>{roomData?.team1_name || 'الفريق الأول'}</p>
                       <div className="flex flex-wrap justify-center gap-3">
                         {team1Players.map((p, i) => (
                           <motion.div
@@ -329,10 +326,9 @@ const GuestJoin = () => {
                     </div>
                   )}
 
-                  {/* Team 2 players */}
                   {team2Players.length > 0 && (
                     <div>
-                      <p className="text-sm font-tajawal font-bold mb-2" style={{ color: 'hsl(222, 78%, 60%)' }}>الفريق الثاني</p>
+                      <p className="text-sm font-tajawal font-bold mb-2" style={{ color: 'hsl(222, 78%, 60%)' }}>{roomData?.team2_name || 'الفريق الثاني'}</p>
                       <div className="flex flex-wrap justify-center gap-3">
                         {team2Players.map((p, i) => (
                           <motion.div
