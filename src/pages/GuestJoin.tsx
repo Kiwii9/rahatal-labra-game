@@ -156,15 +156,20 @@ const GuestJoin = () => {
                 <p className="text-cream/50 font-tajawal text-sm">احصل على الرمز من المضيف</p>
                 <input
                   type="text"
+                  inputMode="text"
+                  autoCapitalize="characters"
                   autoComplete="off"
+                  spellCheck={false}
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
-                  placeholder="ABCD2345"
-                  className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none tracking-[0.4em] text-2xl"
+                  onKeyDown={(e) => { if (e.key === 'Enter' && roomCode.trim().length >= 6) validateRoomCode(roomCode); }}
+                  placeholder="ABCDXYZW"
+                  className="w-full border rounded-xl px-4 py-3 font-tajawal text-center focus:outline-none tracking-[0.4em] text-2xl uppercase"
                   style={{ backgroundColor: 'hsla(195, 42%, 18%, 0.6)', borderColor: 'hsla(25, 87%, 61%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
                   dir="ltr"
                   maxLength={8}
                 />
+                <p className="text-cream/40 text-xs font-tajawal">8 أحرف وأرقام (مثال: KQXM7B3P)</p>
                 <motion.button
                   className="w-full py-4 rounded-xl font-tajawal font-bold text-xl text-white"
                   style={{ background: 'linear-gradient(135deg, hsl(25, 87%, 61%), hsl(25, 87%, 50%))' }}
