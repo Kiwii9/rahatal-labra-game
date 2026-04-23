@@ -232,12 +232,25 @@ const Index = () => {
                 <motion.div className="glass rounded-xl p-4" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
                   <p className="text-cream/60 text-sm font-tajawal mb-2">أدخل رمز الغرفة</p>
                   <div className="flex gap-2">
-                    <input type="text" maxLength={8} value={roomCode} onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder="ABCD2345"
-                      className="flex-1 rounded-lg px-4 py-3 text-center text-2xl font-tajawal tracking-[0.3em] focus:outline-none"
-                      style={{ backgroundColor: 'rgba(26,54,68,0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'hsl(var(--cream))' }} dir="ltr" />
-                    <motion.button className="px-6 rounded-lg font-tajawal font-bold" style={{ background: 'linear-gradient(135deg, #f28b44, #e07030)', color: '#fff' }}
-                      whileTap={{ scale: 0.95 }} onClick={() => roomCode.length === 8 && navigate(`/join?code=${roomCode}`)} disabled={roomCode.length !== 8}>دخول</motion.button>
+                    <input
+                      type="text"
+                      inputMode="text"
+                      autoCapitalize="characters"
+                      autoComplete="off"
+                      spellCheck={false}
+                      maxLength={8}
+                      value={roomCode}
+                      onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))}
+                      onKeyDown={(e) => { if (e.key === 'Enter' && roomCode.length >= 6) navigate(`/join?code=${roomCode}`); }}
+                      placeholder="ABCDXYZW"
+                      className="flex-1 rounded-lg px-4 py-3 text-center text-2xl font-tajawal tracking-[0.3em] focus:outline-none uppercase"
+                      style={{ backgroundColor: 'rgba(26,54,68,0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'hsl(var(--cream))' }}
+                      dir="ltr"
+                    />
+                    <motion.button className="px-6 rounded-lg font-tajawal font-bold disabled:opacity-50" style={{ background: 'linear-gradient(135deg, #f28b44, #e07030)', color: '#fff' }}
+                      whileTap={{ scale: 0.95 }} onClick={() => roomCode.length >= 6 && navigate(`/join?code=${roomCode}`)} disabled={roomCode.length < 6}>دخول</motion.button>
                   </div>
+                  <p className="text-cream/40 text-xs font-tajawal mt-2 text-center">8 أحرف وأرقام (مثال: KQXM7B3P)</p>
                 </motion.div>
               )}
               {/* Developer mode removed - debug access is now via activation codes or developer email only */}
