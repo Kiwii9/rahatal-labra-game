@@ -29,7 +29,7 @@ const Lobby = () => {
     }
   }, [initialized, createRoom, hostName]);
 
-  const guestJoinUrl = room ? `${window.location.origin}/join?pin=${room.pin}` : '';
+  const guestJoinUrl = room?.room_code ? `${window.location.origin}/join?code=${room.room_code}` : '';
   const hostControllerUrl = room ? `${window.location.origin}/host-controller?room=${room.id}` : '';
 
   const team1Players = players.filter(p => p.team === 'team1');
@@ -90,19 +90,29 @@ const Lobby = () => {
 
           {room && (
             <div className="space-y-5">
-              {/* PIN + QR row */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Game PIN */}
+              {/* Unified Room Code + QR row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                {/* Single Room Code */}
                 <div className="text-center">
-                  <p className="text-cream/60 text-sm font-tajawal mb-1">رمز اللعبة للاعبين</p>
-                  <div
-                    className="text-3xl md:text-4xl font-tajawal font-[900] tracking-[0.3em] py-3 rounded-xl"
-                    style={{ color: 'hsl(25, 87%, 61%)', backgroundColor: 'hsla(25, 87%, 61%, 0.1)', border: '1px solid hsla(25, 87%, 61%, 0.2)' }}
-                    dir="ltr"
-                  >
-                    {room.pin}
+                  <p className="text-cream/60 text-sm font-tajawal mb-1">🔑 رمز الغرفة</p>
+                  <div className="flex items-center justify-center gap-2">
+                    <code
+                      className="text-3xl md:text-4xl font-tajawal font-[900] tracking-[0.3em] px-4 py-3 rounded-xl flex-1"
+                      style={{ color: 'hsl(25, 87%, 61%)', backgroundColor: 'hsla(25, 87%, 61%, 0.1)', border: '1px solid hsla(25, 87%, 61%, 0.2)' }}
+                      dir="ltr"
+                    >
+                      {(room as any).room_code || '...'}
+                    </code>
+                    <button
+                      onClick={() => (room as any).room_code && navigator.clipboard.writeText((room as any).room_code)}
+                      className="px-3 py-3 rounded-xl font-tajawal text-sm text-white"
+                      style={{ background: 'linear-gradient(135deg, hsl(25, 87%, 61%), hsl(25, 87%, 50%))' }}
+                    >
+                      نسخ
+                    </button>
                   </div>
-                  <p className="text-cream/40 text-xs font-tajawal mt-2 break-all" dir="ltr">
+                  <p className="text-cream/40 text-xs font-tajawal mt-2">استخدامات غير محدودة • ينتهي بعد ٢٤ ساعة أو عند إغلاق الغرفة</p>
+                  <p className="text-cream/40 text-xs font-tajawal mt-1 break-all" dir="ltr">
                     {guestJoinUrl}
                   </p>
                 </div>
@@ -116,39 +126,6 @@ const Lobby = () => {
                   <p className="text-cream/40 text-xs font-tajawal mt-2">لوحة تحكم المضيف</p>
                 </div>
               </div>
-
-              {/* Player activation code (host-visible only, copyable) */}
-              {(room as any).room_code && (
-                <div
-                  className="rounded-xl p-4"
-                  style={{ backgroundColor: 'hsla(48, 96%, 53%, 0.08)', border: '1px solid hsla(48, 96%, 53%, 0.3)' }}
-                >
-                  <div className="flex items-center justify-between gap-3 flex-wrap">
-                    <div className="text-right">
-                      <p className="text-cream/70 text-sm font-tajawal mb-1">🔑 رمز الغرفة للاعبين</p>
-                      <p className="text-cream/40 text-xs font-tajawal">استخدامات غير محدودة • ينتهي بعد ٢٤ ساعة أو عند إغلاق الغرفة</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <code
-                        className="text-2xl font-tajawal font-[900] tracking-[0.3em] px-4 py-2 rounded-lg"
-                        style={{ color: 'hsl(48, 96%, 60%)', backgroundColor: 'hsla(48, 96%, 53%, 0.1)' }}
-                        dir="ltr"
-                      >
-                        {(room as any).room_code}
-                      </code>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText((room as any).room_code);
-                        }}
-                        className="px-3 py-2 rounded-lg font-tajawal text-sm text-white"
-                        style={{ background: 'linear-gradient(135deg, hsl(48, 96%, 53%), hsl(48, 96%, 43%))' }}
-                      >
-                        نسخ
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               {/* Host name */}
               <div>

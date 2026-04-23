@@ -232,11 +232,11 @@ const Index = () => {
                 <motion.div className="glass rounded-xl p-4" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }}>
                   <p className="text-cream/60 text-sm font-tajawal mb-2">أدخل رمز الغرفة</p>
                   <div className="flex gap-2">
-                    <input type="text" maxLength={6} value={roomCode} onChange={(e) => setRoomCode(e.target.value.replace(/\D/g, ''))} placeholder="000000"
+                    <input type="text" maxLength={8} value={roomCode} onChange={(e) => setRoomCode(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ''))} placeholder="ABCD2345"
                       className="flex-1 rounded-lg px-4 py-3 text-center text-2xl font-tajawal tracking-[0.3em] focus:outline-none"
                       style={{ backgroundColor: 'rgba(26,54,68,0.5)', border: '1px solid rgba(255,255,255,0.15)', color: 'hsl(var(--cream))' }} dir="ltr" />
                     <motion.button className="px-6 rounded-lg font-tajawal font-bold" style={{ background: 'linear-gradient(135deg, #f28b44, #e07030)', color: '#fff' }}
-                      whileTap={{ scale: 0.95 }} onClick={() => roomCode.length === 6 && navigate(`/join?pin=${roomCode}`)} disabled={roomCode.length !== 6}>دخول</motion.button>
+                      whileTap={{ scale: 0.95 }} onClick={() => roomCode.length === 8 && navigate(`/join?code=${roomCode}`)} disabled={roomCode.length !== 8}>دخول</motion.button>
                   </div>
                 </motion.div>
               )}
