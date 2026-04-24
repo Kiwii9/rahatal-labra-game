@@ -1,7 +1,7 @@
 // ============================
 // Zid Service: Validates activation codes via the secure server function.
 // All validation logic is enforced server-side (SECURITY DEFINER RPC).
-// No bypass codes are stored in client code.
+// No bypass codes or privileged emails are stored in client code.
 // ============================
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,12 +12,8 @@ interface CodeValidationResult {
   uses_remaining?: number;
 }
 
-const DEVELOPER_EMAIL = 'team.rahal3@gmail.com';
-
 /**
  * Validate an activation code using the DB function (server-side enforced).
- * The RPC handles all code-type rules (DEBUG / HOST / PLAYER) and decrements
- * usage where applicable. The client never sees the code list.
  */
 export async function validateActivationCode(code: string): Promise<CodeValidationResult> {
   const { data, error } = await supabase.rpc('consume_activation_code', {
@@ -30,19 +26,26 @@ export async function validateActivationCode(code: string): Promise<CodeValidati
 }
 
 /**
- * Check if the current authenticated user is the developer (by email).
- * Developer status is also auto-set on the profiles row by a DB trigger.
+ * Check if the current user is a developer based on their server-side
+ * profile flag. The flag is set by the handle_new_user trigger; the client
+ * never knows the privileged email address.
  */
-export async function isDeveloperEmail(): Promise<boolean> {
+export async function isDeveloperUser(): Promise<boolean> {
   const { data: { user } } = await supabase.auth.getUser();
-  return user?.email?.toLowerCase() === DEVELOPER_EMAIL;
+  if (!user) return false;
+  const { data } = await (supabase as any)
+    .from('profiles')
+    .select('is_developer')
+    .eq('user_id', user.id)
+    .maybeSingle();
+  return Boolean(data?.is_developer);
 }
 
 /**
- * Validate host access: developer email bypass OR a server-validated code.
+ * Validate host access: developer flag bypass OR a server-validated code.
  */
 export async function validateHostAccess(code: string): Promise<CodeValidationResult> {
-  if (await isDeveloperEmail()) {
+  if (await isDeveloperUser()) {
     return { valid: true, message: 'وصول مطوّر', code_type: 'DEBUG' };
   }
   return validateActivationCode(code);
