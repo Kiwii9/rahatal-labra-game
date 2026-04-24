@@ -1,7 +1,8 @@
 // ============================
 // QuestionModal: Fullscreen overlay with question/answer reveal
-// Supports multimedia question schema
+// Supports multimedia question schema + per-question countdown timer
 // ============================
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestionModalProps {
@@ -17,6 +18,8 @@ interface QuestionModalProps {
   team2Name: string;
   imageUrl?: string;
   videoUrl?: string;
+  /** Seconds per question. null/0 = no timer. */
+  timeLimit?: number | null;
   onCorrectTeam1: () => void;
   onCorrectTeam2: () => void;
   onWrong: () => void;
@@ -26,10 +29,22 @@ interface QuestionModalProps {
 const QuestionModal = ({
   isOpen, letter, question, answer, category,
   isHost, answerRevealed, currentTurnColor,
-  team1Name, team2Name, imageUrl, videoUrl,
+  team1Name, team2Name, imageUrl, videoUrl, timeLimit,
   onCorrectTeam1, onCorrectTeam2, onWrong, onClose,
 }: QuestionModalProps) => {
   const accentColor = currentTurnColor === 'terracotta' ? '#f28b44' : '#4a80e8';
+  const hasTimer = !!timeLimit && timeLimit > 0;
+  const [secondsLeft, setSecondsLeft] = useState<number>(hasTimer ? timeLimit! : 0);
+
+  useEffect(() => {
+    if (isOpen && hasTimer) setSecondsLeft(timeLimit!);
+  }, [isOpen, timeLimit, hasTimer]);
+
+  useEffect(() => {
+    if (!isOpen || !hasTimer || secondsLeft <= 0) return;
+    const id = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [isOpen, hasTimer, secondsLeft]);
 
   return (
     <AnimatePresence>
