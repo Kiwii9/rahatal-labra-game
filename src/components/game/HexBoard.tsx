@@ -1,7 +1,9 @@
 // ============================
-// HexBoard: SVG hex grid with triangle border bases matching reference layout
-// Team 1 (top-bottom) gets top/bottom triangle borders
-// Team 2 (left-right) gets left/right triangle borders
+// HexBoard: Rectangular framed board
+// - Top/bottom orange filler bands with zig-zag inner edge hugging the hex rows
+// - Left/right royal-blue filler bands with jagged inner edge hugging the columns
+// - Recessed dark stroke between filler and grid for carved depth
+// - Hex tiles with subtle bevel/inner shadow
 // ============================
 import { motion } from "framer-motion";
 import type { HexCell as HexCellType } from "@/lib/gameLogic";
@@ -15,11 +17,18 @@ interface HexBoardProps {
   disabled?: boolean;
 }
 
-const COLORS = {
-  terracotta: 'hsl(25, 87%, 61%)',
-  blue: 'hsl(222, 78%, 60%)',
-  unclaimed: 'hsl(192, 58%, 25%)',
-  golden: 'hsl(48, 96%, 53%)',
+// Royal palette
+const PALETTE = {
+  terracotta: 'hsl(25, 87%, 58%)',
+  terracottaDeep: 'hsl(20, 80%, 42%)',
+  blue: 'hsl(222, 70%, 48%)',
+  blueDeep: 'hsl(222, 75%, 32%)',
+  unclaimedTop: 'hsl(192, 50%, 32%)',
+  unclaimedBot: 'hsl(195, 55%, 18%)',
+  golden: 'hsl(45, 92%, 55%)',
+  goldenDeep: 'hsl(38, 88%, 42%)',
+  carve: 'hsl(195, 60%, 8%)', // recessed stroke
+  cream: 'hsl(40, 100%, 95%)',
 } as const;
 
 // Pointy-top hex geometry
@@ -29,6 +38,7 @@ const HEX_H = 2 * HEX_SIZE;
 const ROW_H = HEX_H * 0.75;
 const GRID_ROWS = 5;
 const GRID_COLS = 5;
+const FILLER_BAND = 36; // thickness of outer rectangular filler band
 
 function hexPoints(cx: number, cy: number, size: number): string {
   const pts: string[] = [];
@@ -46,220 +56,169 @@ function hexCenter(row: number, col: number, ox: number, oy: number): [number, n
 }
 
 const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disabled }: HexBoardProps) => {
-  const getTeamColor = (status: 'team1' | 'team2') =>
-    COLORS[status === 'team1' ? team1Color : team2Color];
+  const team1Hex = team1Color === 'terracotta' ? PALETTE.terracotta : PALETTE.blue;
+  const team1Deep = team1Color === 'terracotta' ? PALETTE.terracottaDeep : PALETTE.blueDeep;
+  const team2Hex = team2Color === 'terracotta' ? PALETTE.terracotta : PALETTE.blue;
+  const team2Deep = team2Color === 'terracotta' ? PALETTE.terracottaDeep : PALETTE.blueDeep;
 
-  const currentColor = COLORS[currentTurn === 'team1' ? team1Color : team2Color];
-  const team1Hex = COLORS[team1Color];
-  const team2Hex = COLORS[team2Color];
+  const currentColor = currentTurn === 'team1' ? team1Hex : team2Hex;
 
-  const padding = 60;
-  const gridW = (GRID_COLS - 1) * HEX_W + HEX_W / 2;
-  const gridH = (GRID_ROWS - 1) * ROW_H;
-  const svgW = gridW + padding * 2 + HEX_W;
-  const svgH = gridH + padding * 2 + HEX_H + 40;
-  const ox = padding + HEX_W / 2 + 10;
-  const oy = padding + HEX_SIZE + 20;
+  // Layout
+  const sideMargin = 6;
+  const ox = FILLER_BAND + sideMargin + HEX_W / 2;
+  const oy = FILLER_BAND + sideMargin + HEX_SIZE;
 
-  // Render border hexagons that physically enclose the grid (matching reference layout)
-  const renderBorders = () => {
-    const elements: JSX.Element[] = [];
-    const borderSize = HEX_SIZE * 0.45;
+  const gridLeft = ox - HEX_W / 2;
+  const gridRight = ox + (GRID_COLS - 1) * HEX_W + HEX_W / 2 + HEX_W / 2; // include odd-row offset
+  const gridTop = oy - HEX_SIZE;
+  const gridBottom = oy + (GRID_ROWS - 1) * ROW_H + HEX_SIZE;
 
-    // Team 1: TOP border - row of small triangles along top edge
-    for (let col = 0; col < GRID_COLS; col++) {
-      const [cx, cy] = hexCenter(0, col, ox, oy);
-      const topY = cy - HEX_SIZE;
-      const triH = borderSize;
-      elements.push(
-        <polygon
-          key={`t1-top-${col}`}
-          points={`${cx - HEX_W * 0.35},${topY - triH} ${cx + HEX_W * 0.35},${topY - triH} ${cx},${topY + 2}`}
-          fill={team1Hex}
-          opacity={0.9}
-          stroke={team1Hex}
-          strokeWidth="1"
-        />
-      );
-    }
-    for (let col = 0; col < GRID_COLS - 1; col++) {
-      const [cx1, cy1] = hexCenter(0, col, ox, oy);
-      const [cx2] = hexCenter(0, col + 1, ox, oy);
-      const midX = (cx1 + cx2) / 2;
-      const topY = cy1 - HEX_SIZE;
-      const triH = borderSize;
-      elements.push(
-        <polygon
-          key={`t1-top-gap-${col}`}
-          points={`${midX - HEX_W * 0.25},${topY - triH} ${midX + HEX_W * 0.25},${topY - triH} ${midX},${topY + 2}`}
-          fill={team1Hex}
-          opacity={0.75}
-          stroke={team1Hex}
-          strokeWidth="0.5"
-        />
-      );
-    }
-    // Connecting bar along top
-    const [topLeft] = hexCenter(0, 0, ox, oy);
-    const [topRight] = hexCenter(0, GRID_COLS - 1, ox, oy);
-    const topBarY = hexCenter(0, 0, ox, oy)[1] - HEX_SIZE - borderSize;
-    elements.push(
-      <rect
-        key="t1-top-bar"
-        x={topLeft - HEX_W * 0.35}
-        y={topBarY - 4}
-        width={topRight - topLeft + HEX_W * 0.7}
-        height={6}
-        rx={3}
-        fill={team1Hex}
-        opacity={0.9}
-      />
-    );
+  const frameLeft = gridLeft - FILLER_BAND - sideMargin;
+  const frameRight = gridRight + FILLER_BAND + sideMargin;
+  const frameTop = gridTop - FILLER_BAND - sideMargin;
+  const frameBottom = gridBottom + FILLER_BAND + sideMargin;
+  const svgW = frameRight - frameLeft;
+  const svgH = frameBottom - frameTop;
 
-    // Team 1: BOTTOM border
-    for (let col = 0; col < GRID_COLS; col++) {
-      const [cx, cy] = hexCenter(GRID_ROWS - 1, col, ox, oy);
-      const botY = cy + HEX_SIZE;
-      const triH = borderSize;
-      elements.push(
-        <polygon
-          key={`t1-bot-${col}`}
-          points={`${cx - HEX_W * 0.35},${botY + triH} ${cx + HEX_W * 0.35},${botY + triH} ${cx},${botY - 2}`}
-          fill={team1Hex}
-          opacity={0.9}
-          stroke={team1Hex}
-          strokeWidth="1"
-        />
-      );
-    }
-    for (let col = 0; col < GRID_COLS - 1; col++) {
-      const [cx1, cy1] = hexCenter(GRID_ROWS - 1, col, ox, oy);
-      const [cx2] = hexCenter(GRID_ROWS - 1, col + 1, ox, oy);
-      const midX = (cx1 + cx2) / 2;
-      const botY = cy1 + HEX_SIZE;
-      const triH = borderSize;
-      elements.push(
-        <polygon
-          key={`t1-bot-gap-${col}`}
-          points={`${midX - HEX_W * 0.25},${botY + triH} ${midX + HEX_W * 0.25},${botY + triH} ${midX},${botY - 2}`}
-          fill={team1Hex}
-          opacity={0.75}
-          stroke={team1Hex}
-          strokeWidth="0.5"
-        />
-      );
-    }
-    // Connecting bar along bottom
-    const [botLeft] = hexCenter(GRID_ROWS - 1, 0, ox, oy);
-    const [botRight] = hexCenter(GRID_ROWS - 1, GRID_COLS - 1, ox, oy);
-    const botBarY = hexCenter(GRID_ROWS - 1, 0, ox, oy)[1] + HEX_SIZE + borderSize;
-    elements.push(
-      <rect
-        key="t1-bot-bar"
-        x={botLeft - HEX_W * 0.35}
-        y={botBarY - 2}
-        width={botRight - botLeft + HEX_W * 0.7}
-        height={6}
-        rx={3}
-        fill={team1Hex}
-        opacity={0.9}
-      />
-    );
+  // ----- Build zig-zag inner edges that hug hex rows/columns -----
+  // Top filler: outer = straight line at frameTop; inner = zig-zag along top hex row.
+  const topInner: string[] = [];
+  for (let col = 0; col < GRID_COLS; col++) {
+    const [cx, cy] = hexCenter(0, col, ox, oy);
+    // Each top hex contributes its top apex and the two upper shoulder points
+    topInner.push(`${cx - HEX_W / 2},${cy - HEX_SIZE / 2}`); // upper-left shoulder
+    topInner.push(`${cx},${cy - HEX_SIZE}`);                  // top apex
+    topInner.push(`${cx + HEX_W / 2},${cy - HEX_SIZE / 2}`); // upper-right shoulder
+  }
+  // Reverse so the polygon winds correctly (inner edge then outer)
+  const topPath = `M ${frameLeft + 4},${frameTop} L ${frameRight - 4},${frameTop} L ${frameRight - 4},${gridTop + HEX_SIZE / 2} ` +
+    topInner.reverse().map((p) => `L ${p}`).join(' ') +
+    ` L ${frameLeft + 4},${gridTop + HEX_SIZE / 2} Z`;
 
-    // Team 2: LEFT border
-    for (let row = 0; row < GRID_ROWS; row++) {
-      const [cx, cy] = hexCenter(row, 0, ox, oy);
-      const leftX = cx - HEX_W / 2;
-      const triW = borderSize;
-      elements.push(
-        <polygon
-          key={`t2-left-${row}`}
-          points={`${leftX - triW},${cy - HEX_SIZE * 0.35} ${leftX - triW},${cy + HEX_SIZE * 0.35} ${leftX + 2},${cy}`}
-          fill={team2Hex}
-          opacity={0.9}
-          stroke={team2Hex}
-          strokeWidth="1"
-        />
-      );
-    }
-    // Fill gaps between left column rows
-    for (let row = 0; row < GRID_ROWS - 1; row++) {
-      const [, cy1] = hexCenter(row, 0, ox, oy);
-      const [cx2, cy2] = hexCenter(row + 1, 0, ox, oy);
-      const leftX1 = hexCenter(row, 0, ox, oy)[0] - HEX_W / 2;
-      const leftX2 = cx2 - HEX_W / 2;
-      const midY = (cy1 + cy2) / 2;
-      const midX = (leftX1 + leftX2) / 2;
-      elements.push(
-        <polygon
-          key={`t2-left-gap-${row}`}
-          points={`${midX - borderSize},${midY - HEX_SIZE * 0.2} ${midX - borderSize},${midY + HEX_SIZE * 0.2} ${midX + 2},${midY}`}
-          fill={team2Hex}
-          opacity={0.7}
-          stroke={team2Hex}
-          strokeWidth="0.5"
-        />
-      );
-    }
+  // Bottom filler: mirror of top
+  const botInner: string[] = [];
+  for (let col = 0; col < GRID_COLS; col++) {
+    const [cx, cy] = hexCenter(GRID_ROWS - 1, col, ox, oy);
+    botInner.push(`${cx - HEX_W / 2},${cy + HEX_SIZE / 2}`);
+    botInner.push(`${cx},${cy + HEX_SIZE}`);
+    botInner.push(`${cx + HEX_W / 2},${cy + HEX_SIZE / 2}`);
+  }
+  const botPath = `M ${frameLeft + 4},${frameBottom} L ${frameRight - 4},${frameBottom} L ${frameRight - 4},${gridBottom - HEX_SIZE / 2} ` +
+    botInner.reverse().map((p) => `L ${p}`).join(' ') +
+    ` L ${frameLeft + 4},${gridBottom - HEX_SIZE / 2} Z`;
 
-    // Team 2: RIGHT border
-    for (let row = 0; row < GRID_ROWS; row++) {
-      const [cx, cy] = hexCenter(row, GRID_COLS - 1, ox, oy);
-      const rightX = cx + HEX_W / 2;
-      const triW = borderSize;
-      elements.push(
-        <polygon
-          key={`t2-right-${row}`}
-          points={`${rightX + triW},${cy - HEX_SIZE * 0.35} ${rightX + triW},${cy + HEX_SIZE * 0.35} ${rightX - 2},${cy}`}
-          fill={team2Hex}
-          opacity={0.9}
-          stroke={team2Hex}
-          strokeWidth="1"
-        />
-      );
-    }
-    // Fill gaps between right column rows
-    for (let row = 0; row < GRID_ROWS - 1; row++) {
-      const [, cy1] = hexCenter(row, GRID_COLS - 1, ox, oy);
-      const [cx2, cy2] = hexCenter(row + 1, GRID_COLS - 1, ox, oy);
-      const rightX1 = hexCenter(row, GRID_COLS - 1, ox, oy)[0] + HEX_W / 2;
-      const rightX2 = cx2 + HEX_W / 2;
-      const midY = (cy1 + cy2) / 2;
-      const midX = (rightX1 + rightX2) / 2;
-      elements.push(
-        <polygon
-          key={`t2-right-gap-${row}`}
-          points={`${midX + borderSize},${midY - HEX_SIZE * 0.2} ${midX + borderSize},${midY + HEX_SIZE * 0.2} ${midX - 2},${midY}`}
-          fill={team2Hex}
-          opacity={0.7}
-          stroke={team2Hex}
-          strokeWidth="0.5"
-        />
-      );
-    }
+  // Left filler: outer = straight line at frameLeft; inner = jagged along left edge of column 0
+  const leftInner: string[] = [];
+  for (let row = 0; row < GRID_ROWS; row++) {
+    const [cx, cy] = hexCenter(row, 0, ox, oy);
+    // Add the three left vertices of the hex (upper-left, far-left, lower-left)
+    leftInner.push(`${cx - HEX_W / 2},${cy - HEX_SIZE / 2}`);
+    leftInner.push(`${cx - HEX_W / 2},${cy + HEX_SIZE / 2}`);
+  }
+  const leftPath = `M ${frameLeft},${frameTop + 4} L ${frameLeft},${frameBottom - 4} L ${gridLeft + 2},${frameBottom - 4} ` +
+    leftInner.reverse().map((p) => `L ${p}`).join(' ') +
+    ` L ${gridLeft + 2},${frameTop + 4} Z`;
 
-    return elements;
-  };
+  // Right filler: jagged inner along last column
+  const rightInner: string[] = [];
+  for (let row = 0; row < GRID_ROWS; row++) {
+    const [cx, cy] = hexCenter(row, GRID_COLS - 1, ox, oy);
+    rightInner.push(`${cx + HEX_W / 2},${cy - HEX_SIZE / 2}`);
+    rightInner.push(`${cx + HEX_W / 2},${cy + HEX_SIZE / 2}`);
+  }
+  const rightPath = `M ${frameRight},${frameTop + 4} L ${frameRight},${frameBottom - 4} L ${gridRight - 2},${frameBottom - 4} ` +
+    rightInner.reverse().map((p) => `L ${p}`).join(' ') +
+    ` L ${gridRight - 2},${frameTop + 4} Z`;
 
   return (
     <div className="w-full flex justify-center">
       <svg
-        viewBox={`0 0 ${svgW} ${svgH}`}
-        className="w-full max-w-[560px] md:max-w-[660px] h-auto"
-        style={{ filter: 'drop-shadow(0 8px 32px rgba(0,0,0,0.4))' }}
+        viewBox={`${frameLeft} ${frameTop} ${svgW} ${svgH}`}
+        className="w-full max-w-[640px] md:max-w-[760px] h-auto"
+        style={{ filter: 'drop-shadow(0 12px 40px rgba(0,0,0,0.55))' }}
       >
-        {/* Border bases */}
-        {renderBorders()}
+        <defs>
+          {/* Vertical orange band gradient */}
+          <linearGradient id="topBand" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={team1Hex} />
+            <stop offset="100%" stopColor={team1Deep} />
+          </linearGradient>
+          <linearGradient id="botBand" x1="0" y1="1" x2="0" y2="0">
+            <stop offset="0%" stopColor={team1Hex} />
+            <stop offset="100%" stopColor={team1Deep} />
+          </linearGradient>
+          {/* Horizontal blue band gradient */}
+          <linearGradient id="leftBand" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stopColor={team2Hex} />
+            <stop offset="100%" stopColor={team2Deep} />
+          </linearGradient>
+          <linearGradient id="rightBand" x1="1" y1="0" x2="0" y2="0">
+            <stop offset="0%" stopColor={team2Hex} />
+            <stop offset="100%" stopColor={team2Deep} />
+          </linearGradient>
+          {/* Hex bevel: light from upper-left, dark from lower-right */}
+          <linearGradient id="hexBevel" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.18)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.32)" />
+          </linearGradient>
+          <radialGradient id="hexUnclaimed" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stopColor={PALETTE.unclaimedTop} />
+            <stop offset="100%" stopColor={PALETTE.unclaimedBot} />
+          </radialGradient>
+          <radialGradient id="hexGolden" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stopColor={PALETTE.golden} />
+            <stop offset="100%" stopColor={PALETTE.goldenDeep} />
+          </radialGradient>
+          <filter id="innerShadow" x="-20%" y="-20%" width="140%" height="140%">
+            <feGaussianBlur in="SourceAlpha" stdDeviation="2" />
+            <feOffset dx="0" dy="2" result="offsetblur" />
+            <feFlood floodColor="rgba(0,0,0,0.5)" />
+            <feComposite in2="offsetblur" operator="in" />
+            <feComposite in2="SourceGraphic" operator="arithmetic" k2="-1" k3="1" />
+          </filter>
+        </defs>
+
+        {/* Outer rectangular dark plate behind everything (recessed look) */}
+        <rect
+          x={frameLeft} y={frameTop} width={svgW} height={svgH}
+          rx="14"
+          fill={PALETTE.carve}
+        />
+
+        {/* Filler bands (drawn behind the hex grid, hugging it) */}
+        <path d={topPath} fill="url(#topBand)" stroke={PALETTE.carve} strokeWidth="2.5" strokeLinejoin="round" />
+        <path d={botPath} fill="url(#botBand)" stroke={PALETTE.carve} strokeWidth="2.5" strokeLinejoin="round" />
+        <path d={leftPath} fill="url(#leftBand)" stroke={PALETTE.carve} strokeWidth="2.5" strokeLinejoin="round" />
+        <path d={rightPath} fill="url(#rightBand)" stroke={PALETTE.carve} strokeWidth="2.5" strokeLinejoin="round" />
+
+        {/* Subtle highlight strokes on filler bands for "royal" sheen */}
+        <path d={topPath} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+        <path d={botPath} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
+        <path d={leftPath} fill="none" stroke="rgba(255,255,255,0.12)" strokeWidth="1" />
+        <path d={rightPath} fill="none" stroke="rgba(255,255,255,0.10)" strokeWidth="1" />
+
+        {/* Outer gold-ish frame line */}
+        <rect
+          x={frameLeft + 1} y={frameTop + 1} width={svgW - 2} height={svgH - 2}
+          rx="13" fill="none"
+          stroke="rgba(212,175,90,0.35)" strokeWidth="1.5"
+        />
 
         {/* Main hex grid */}
         {board.map((cell, i) => {
           const [cx, cy] = hexCenter(cell.row, cell.col, ox, oy);
           const isClaimed = cell.status !== 'unclaimed';
-          const bgColor = isClaimed
-            ? getTeamColor(cell.status as 'team1' | 'team2')
-            : cell.isGolden ? COLORS.golden : COLORS.unclaimed;
+          const teamFill = isClaimed
+            ? (cell.status === 'team1' ? team1Hex : team2Hex)
+            : null;
+          const teamDeep = isClaimed
+            ? (cell.status === 'team1' ? team1Deep : team2Deep)
+            : null;
           const isGoldenUnclaimed = cell.isGolden && !isClaimed;
           const clickable = !isClaimed && !disabled;
+
+          // Build per-hex gradient for claimed cells
+          const claimedGradId = isClaimed ? `claimed-${cell.index}` : '';
 
           return (
             <g
@@ -267,37 +226,61 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
               onClick={() => clickable && onHexClick(cell)}
               style={{ cursor: clickable ? 'pointer' : 'default' }}
             >
+              {isClaimed && (
+                <defs>
+                  <radialGradient id={claimedGradId} cx="50%" cy="35%" r="70%">
+                    <stop offset="0%" stopColor={teamFill!} />
+                    <stop offset="100%" stopColor={teamDeep!} />
+                  </radialGradient>
+                </defs>
+              )}
+
               {/* Winning path glow */}
               {cell.isWinningPath && (
                 <polygon
-                  points={hexPoints(cx, cy, HEX_SIZE + 4)}
+                  points={hexPoints(cx, cy, HEX_SIZE + 5)}
                   fill="none"
-                  stroke={bgColor}
+                  stroke={teamFill || PALETTE.golden}
                   strokeWidth="3"
-                  opacity="0.6"
+                  opacity="0.7"
                 >
-                  <animate attributeName="opacity" values="0.3;0.8;0.3" dur="1.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;1;0.4" dur="1.5s" repeatCount="indefinite" />
                 </polygon>
               )}
 
+              {/* Recessed dark base for carved depth */}
+              <polygon
+                points={hexPoints(cx, cy + 1.5, HEX_SIZE)}
+                fill={PALETTE.carve}
+                opacity="0.85"
+              />
+
               {/* Main hex body */}
               <motion.polygon
-                points={hexPoints(cx, cy, HEX_SIZE - 1)}
-                fill={bgColor}
-                stroke={isClaimed ? bgColor : 'hsla(0, 0%, 100%, 0.08)'}
-                strokeWidth="1.5"
+                points={hexPoints(cx, cy, HEX_SIZE - 1.5)}
+                fill={isClaimed ? `url(#${claimedGradId})` : isGoldenUnclaimed ? 'url(#hexGolden)' : 'url(#hexUnclaimed)'}
+                stroke={PALETTE.carve}
+                strokeWidth="1.2"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: i * 0.02, duration: 0.3 }}
               />
 
+              {/* Bevel highlight overlay */}
+              <polygon
+                points={hexPoints(cx, cy, HEX_SIZE - 1.5)}
+                fill="url(#hexBevel)"
+                opacity="0.45"
+                pointerEvents="none"
+              />
+
               {/* Hover highlight */}
               {clickable && (
                 <polygon
-                  points={hexPoints(cx, cy, HEX_SIZE - 1)}
+                  points={hexPoints(cx, cy, HEX_SIZE - 1.5)}
                   fill="transparent"
                   style={{ transition: 'fill 0.2s' }}
-                  onMouseEnter={(e) => { (e.target as SVGPolygonElement).style.fill = `${currentColor}33`; }}
+                  onMouseEnter={(e) => { (e.target as SVGPolygonElement).style.fill = `${currentColor}40`; }}
                   onMouseLeave={(e) => { (e.target as SVGPolygonElement).style.fill = 'transparent'; }}
                 />
               )}
@@ -310,11 +293,11 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
                 dominantBaseline="central"
                 className="font-tajawal"
                 style={{
-                  fontSize: isGoldenUnclaimed ? '17px' : '19px',
+                  fontSize: isGoldenUnclaimed ? '18px' : '20px',
                   fontWeight: 900,
-                  fill: isGoldenUnclaimed ? 'hsl(195, 42%, 18%)' : isClaimed ? '#ffffff' : 'hsl(40, 100%, 95%)',
+                  fill: isGoldenUnclaimed ? PALETTE.carve : isClaimed ? '#ffffff' : PALETTE.cream,
                   pointerEvents: 'none',
-                  textShadow: isClaimed ? '0 1px 3px rgba(0,0,0,0.4)' : 'none',
+                  textShadow: '0 1px 2px rgba(0,0,0,0.6)',
                 }}
               >
                 {cell.letter}
