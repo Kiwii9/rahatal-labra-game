@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleIcon, AppleIcon, EmailIcon } from "@/components/icons/AuthIcons";
-import { validateHostAccess, isDeveloperEmail } from "@/lib/zidMockService";
+import { validateHostAccess } from "@/lib/zidMockService";
 import GameTitle from "@/components/game/GameTitle";
 import GameFooter from "@/components/game/GameFooter";
 
