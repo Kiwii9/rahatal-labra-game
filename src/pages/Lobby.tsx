@@ -349,7 +349,9 @@ interface TeamCardProps {
   players: any[];
 }
 const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }: TeamCardProps) => {
-  const selectedHex = swatches.find(s => s.key === selected)?.hex || swatches[0].hex;
+  const selectedHex = selected.startsWith('#')
+    ? selected
+    : (swatches.find(s => s.key === selected)?.hex || swatches[0].hex);
   return (
     <div className="rounded-2xl p-4" style={{ background: 'hsla(192, 55%, 14%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.18)' }}>
       <h4 className="text-cream/80 font-tajawal font-bold text-base mb-3 text-center" style={{ color: selectedHex }}>{title}</h4>
