@@ -362,7 +362,7 @@ const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }
       />
 
       <p className="text-cream/55 text-[11px] font-tajawal mb-2 text-center">اللون</p>
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-4 gap-2 mb-2">
         {swatches.map((sw) => {
           const active = selected === sw.key;
           return (
@@ -382,6 +382,28 @@ const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }
             />
           );
         })}
+      </div>
+      <div className="flex items-center gap-2 mb-3" dir="ltr">
+        <input
+          type="color"
+          value={selectedHex}
+          onChange={(e) => onSelect(e.target.value)}
+          className="w-9 h-9 rounded-md cursor-pointer bg-transparent border-0 p-0"
+          title="لون مخصص"
+        />
+        <input
+          type="text"
+          value={selectedHex}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            if (/^#?[0-9A-Fa-f]{0,6}$/.test(v)) {
+              onSelect(v.startsWith('#') ? v : `#${v}`);
+            }
+          }}
+          placeholder="#RRGGBB"
+          className="flex-1 rounded-md px-2 py-1.5 font-mono text-xs focus:outline-none"
+          style={{ backgroundColor: 'hsla(195, 60%, 12%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.25)', color: 'hsl(40, 100%, 95%)' }}
+        />
       </div>
 
       {players.length > 0 && (
