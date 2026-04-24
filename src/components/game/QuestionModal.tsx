@@ -72,12 +72,28 @@ const QuestionModal = ({
               boxShadow: `0 0 40px ${accentColor}20, 0 20px 60px rgba(0,0,0,0.5)`,
             }}
           >
-            {/* Category badge */}
-            <div
-              className="inline-block px-4 py-1 rounded-full text-sm font-bold mb-4 font-tajawal"
-              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
-            >
-              {category}
+            {/* Category badge + Timer */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div
+                className="inline-block px-4 py-1 rounded-full text-sm font-bold font-tajawal"
+                style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+              >
+                {category}
+              </div>
+              {hasTimer && (
+                <div
+                  className="px-4 py-1.5 rounded-full text-base font-tajawal font-[900] tabular-nums"
+                  style={{
+                    backgroundColor: secondsLeft <= 5 ? 'rgba(239,68,68,0.2)' : `${accentColor}20`,
+                    color: secondsLeft <= 5 ? '#ef4444' : accentColor,
+                    border: `1px solid ${secondsLeft <= 5 ? '#ef4444' : accentColor}55`,
+                    minWidth: 70,
+                    textAlign: 'center',
+                  }}
+                >
+                  ⏱ {secondsLeft}s
+                </div>
+              )}
             </div>
 
             {/* Letter */}
