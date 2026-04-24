@@ -125,7 +125,22 @@ const Game = () => {
   return (
     <div className="min-h-screen flex flex-col relative" style={{ backgroundColor: '#1a3644' }}>
       {/* Header */}
-      <div className="pt-4 pb-2 px-4">
+      <div className="pt-4 pb-2 px-4 relative">
+        {isHost && (
+          <button
+            onClick={() => navigate('/')}
+            className="absolute top-4 right-4 z-20 px-3 py-2 rounded-xl font-tajawal text-xs font-bold transition-all hover:scale-105"
+            style={{
+              background: 'rgba(26,54,68,0.85)',
+              color: '#f6c761',
+              border: '1px solid rgba(246,199,97,0.4)',
+              backdropFilter: 'blur(6px)',
+            }}
+            title="العودة للرئيسية"
+          >
+            🏠 الرئيسية
+          </button>
+        )}
         <GameTitle hostName={hostName} className="scale-90 md:scale-100" />
       </div>
 
