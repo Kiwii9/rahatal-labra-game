@@ -179,7 +179,6 @@ export type Database = {
           host_id: string | null
           host_name: string
           id: string
-          pin: string
           rebound_expires_at: string | null
           room_code: string | null
           status: string
@@ -201,7 +200,6 @@ export type Database = {
           host_id?: string | null
           host_name?: string
           id?: string
-          pin: string
           rebound_expires_at?: string | null
           room_code?: string | null
           status?: string
@@ -223,7 +221,6 @@ export type Database = {
           host_id?: string | null
           host_name?: string
           id?: string
-          pin?: string
           rebound_expires_at?: string | null
           room_code?: string | null
           status?: string

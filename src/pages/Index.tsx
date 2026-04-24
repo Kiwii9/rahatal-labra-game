@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleIcon, AppleIcon, EmailIcon } from "@/components/icons/AuthIcons";
-import { validateHostAccess, isDeveloperEmail } from "@/lib/zidMockService";
+import { validateHostAccess } from "@/lib/zidMockService";
 import GameTitle from "@/components/game/GameTitle";
 import GameFooter from "@/components/game/GameFooter";
 
@@ -27,12 +27,11 @@ const Index = () => {
 
   // Check if already logged in on mount & listen for auth changes
   useEffect(() => {
-    const checkProfile = async (userId: string, userEmail?: string | null) => {
-      // Use maybeSingle to avoid 406 when no profile row exists yet
+    const checkProfile = async (userId: string) => {
       const { data: profile } = await (supabase as any)
         .from('profiles').select('*').eq('user_id', userId).maybeSingle();
-      // Developer email is auto-verified by DB trigger
-      if (profile?.purchase_verified || userEmail === 'team.rahal3@gmail.com') {
+      // Developer flag is set server-side by the handle_new_user trigger.
+      if (profile?.purchase_verified || profile?.is_developer) {
         navigate("/lobby");
       } else {
         setShowPurchaseValidation(true);
@@ -41,14 +40,12 @@ const Index = () => {
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        // Defer to avoid deadlock with onAuthStateChange callback
-        setTimeout(() => checkProfile(session.user.id, session.user.email), 0);
+        setTimeout(() => checkProfile(session.user.id), 0);
       }
     });
-    // Check existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) {
-        checkProfile(session.user.id, session.user.email);
+        checkProfile(session.user.id);
       }
     });
     return () => subscription.unsubscribe();
