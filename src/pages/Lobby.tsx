@@ -252,25 +252,37 @@ const Lobby = () => {
                   players={players.filter(p => p.team === 'team2')}
                 />
 
-                {/* Game Rules (left in RTL) */}
+                {/* Game Rules (left in RTL) — manual inputs */}
                 <div className="rounded-2xl p-4" style={{ background: 'hsla(192, 55%, 14%, 0.7)', border: cardBorder }}>
                   <h4 className="text-cream/80 font-tajawal font-bold text-base mb-3 text-center">قواعد اللعبة</h4>
 
-                  <p className="text-cream/60 text-xs font-tajawal mb-1.5">⏱ الزمن</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {[null, 30, 45, 60].map((t) => (
-                      <Pill key={String(t)} active={timeLimit === t} onClick={() => setTimeLimit(t)}>
-                        {t === null ? '∞' : `${t}s`}
-                      </Pill>
-                    ))}
-                  </div>
+                  <p className="text-cream/60 text-xs font-tajawal mb-1.5">⏱ الزمن لكل سؤال (ثانية، 0 = ∞)</p>
+                  <input
+                    type="number"
+                    min={0}
+                    max={600}
+                    value={timeLimit ?? 0}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setTimeLimit(isNaN(v) || v <= 0 ? null : v);
+                    }}
+                    className="w-full rounded-xl px-3 py-2 mb-3 font-tajawal text-center focus:outline-none"
+                    style={{ backgroundColor: 'hsla(195, 60%, 12%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
+                  />
 
                   <p className="text-cream/60 text-xs font-tajawal mb-1.5">🎯 عدد الجولات</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {[1, 3, 5].map((r) => (
-                      <Pill key={r} active={rounds === r} onClick={() => setRounds(r)}>{r}</Pill>
-                    ))}
-                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={rounds}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setRounds(isNaN(v) || v < 1 ? 1 : v);
+                    }}
+                    className="w-full rounded-xl px-3 py-2 mb-3 font-tajawal text-center focus:outline-none"
+                    style={{ backgroundColor: 'hsla(195, 60%, 12%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
+                  />
 
                   <p className="text-cream/60 text-xs font-tajawal mb-1.5">🚀 البادئ</p>
                   <div className="flex flex-wrap gap-1.5">
