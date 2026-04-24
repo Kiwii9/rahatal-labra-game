@@ -31,6 +31,8 @@ const Game = () => {
   const team1Color = (searchParams.get("t1c") as 'terracotta' | 'blue') || "terracotta";
   const team2Color = (searchParams.get("t2c") as 'terracotta' | 'blue') || "blue";
   const hostName = searchParams.get("host") || "رحّال";
+  const timeParam = searchParams.get("time");
+  const perQuestionTime: number | null = !timeParam || timeParam === 'inf' ? null : (parseInt(timeParam, 10) || null);
 
   const [gameState, setGameState] = useState<GameState>(() => ({
     ...createInitialGameState(),
