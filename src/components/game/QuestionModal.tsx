@@ -1,7 +1,8 @@
 // ============================
 // QuestionModal: Fullscreen overlay with question/answer reveal
-// Supports multimedia question schema
+// Supports multimedia question schema + per-question countdown timer
 // ============================
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface QuestionModalProps {
@@ -17,6 +18,8 @@ interface QuestionModalProps {
   team2Name: string;
   imageUrl?: string;
   videoUrl?: string;
+  /** Seconds per question. null/0 = no timer. */
+  timeLimit?: number | null;
   onCorrectTeam1: () => void;
   onCorrectTeam2: () => void;
   onWrong: () => void;
@@ -26,10 +29,22 @@ interface QuestionModalProps {
 const QuestionModal = ({
   isOpen, letter, question, answer, category,
   isHost, answerRevealed, currentTurnColor,
-  team1Name, team2Name, imageUrl, videoUrl,
+  team1Name, team2Name, imageUrl, videoUrl, timeLimit,
   onCorrectTeam1, onCorrectTeam2, onWrong, onClose,
 }: QuestionModalProps) => {
   const accentColor = currentTurnColor === 'terracotta' ? '#f28b44' : '#4a80e8';
+  const hasTimer = !!timeLimit && timeLimit > 0;
+  const [secondsLeft, setSecondsLeft] = useState<number>(hasTimer ? timeLimit! : 0);
+
+  useEffect(() => {
+    if (isOpen && hasTimer) setSecondsLeft(timeLimit!);
+  }, [isOpen, timeLimit, hasTimer]);
+
+  useEffect(() => {
+    if (!isOpen || !hasTimer || secondsLeft <= 0) return;
+    const id = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearInterval(id);
+  }, [isOpen, hasTimer, secondsLeft]);
 
   return (
     <AnimatePresence>
@@ -57,12 +72,28 @@ const QuestionModal = ({
               boxShadow: `0 0 40px ${accentColor}20, 0 20px 60px rgba(0,0,0,0.5)`,
             }}
           >
-            {/* Category badge */}
-            <div
-              className="inline-block px-4 py-1 rounded-full text-sm font-bold mb-4 font-tajawal"
-              style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
-            >
-              {category}
+            {/* Category badge + Timer */}
+            <div className="flex items-center justify-between gap-3 mb-4">
+              <div
+                className="inline-block px-4 py-1 rounded-full text-sm font-bold font-tajawal"
+                style={{ backgroundColor: `${accentColor}20`, color: accentColor }}
+              >
+                {category}
+              </div>
+              {hasTimer && (
+                <div
+                  className="px-4 py-1.5 rounded-full text-base font-tajawal font-[900] tabular-nums"
+                  style={{
+                    backgroundColor: secondsLeft <= 5 ? 'rgba(239,68,68,0.2)' : `${accentColor}20`,
+                    color: secondsLeft <= 5 ? '#ef4444' : accentColor,
+                    border: `1px solid ${secondsLeft <= 5 ? '#ef4444' : accentColor}55`,
+                    minWidth: 70,
+                    textAlign: 'center',
+                  }}
+                >
+                  ⏱ {secondsLeft}s
+                </div>
+              )}
             </div>
 
             {/* Letter */}

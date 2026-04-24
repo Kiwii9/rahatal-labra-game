@@ -98,6 +98,8 @@ const Lobby = () => {
       t2: team2Name,
       t1c: team1EngineColor,
       t2c: team2EngineColor,
+      t1hex: team1Swatch.startsWith('#') ? team1Swatch : (ORANGE_SWATCHES.find(s => s.key === team1Swatch)?.hex || '#f28b44'),
+      t2hex: team2Swatch.startsWith('#') ? team2Swatch : (BLUE_SWATCHES.find(s => s.key === team2Swatch)?.hex || '#4a80e8'),
       host: hostName,
       grid: String(gridSize),
       time: timeLimit === null ? 'inf' : String(timeLimit),
@@ -124,10 +126,24 @@ const Lobby = () => {
           animate={{ opacity: 1, y: 0 }}
           style={{ background: cardBg, border: cardBorder, boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
         >
-          {/* Title */}
-          <div className="mb-4 text-center">
-            <GameTitle hostName={hostName} className="scale-75 origin-center" />
-          </div>
+              {/* Title + Home button */}
+              <div className="mb-4 relative">
+                <button
+                  onClick={() => navigate('/')}
+                  className="absolute top-0 right-0 z-10 px-3 py-2 rounded-xl font-tajawal text-xs font-bold transition-all"
+                  style={{
+                    background: 'hsla(195, 60%, 12%, 0.8)',
+                    color: 'hsl(45, 92%, 65%)',
+                    border: '1px solid hsla(45, 90%, 55%, 0.4)',
+                  }}
+                  title="العودة للرئيسية"
+                >
+                  🏠 الرئيسية
+                </button>
+                <div className="text-center">
+                  <GameTitle hostName={hostName} className="scale-75 origin-center" />
+                </div>
+              </div>
 
           {loading && !room && (
             <div className="text-center py-10">
@@ -238,25 +254,37 @@ const Lobby = () => {
                   players={players.filter(p => p.team === 'team2')}
                 />
 
-                {/* Game Rules (left in RTL) */}
+                {/* Game Rules (left in RTL) — manual inputs */}
                 <div className="rounded-2xl p-4" style={{ background: 'hsla(192, 55%, 14%, 0.7)', border: cardBorder }}>
                   <h4 className="text-cream/80 font-tajawal font-bold text-base mb-3 text-center">قواعد اللعبة</h4>
 
-                  <p className="text-cream/60 text-xs font-tajawal mb-1.5">⏱ الزمن</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {[null, 30, 45, 60].map((t) => (
-                      <Pill key={String(t)} active={timeLimit === t} onClick={() => setTimeLimit(t)}>
-                        {t === null ? '∞' : `${t}s`}
-                      </Pill>
-                    ))}
-                  </div>
+                  <p className="text-cream/60 text-xs font-tajawal mb-1.5">⏱ الزمن لكل سؤال (ثانية، 0 = ∞)</p>
+                  <input
+                    type="number"
+                    min={0}
+                    max={600}
+                    value={timeLimit ?? 0}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setTimeLimit(isNaN(v) || v <= 0 ? null : v);
+                    }}
+                    className="w-full rounded-xl px-3 py-2 mb-3 font-tajawal text-center focus:outline-none"
+                    style={{ backgroundColor: 'hsla(195, 60%, 12%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
+                  />
 
                   <p className="text-cream/60 text-xs font-tajawal mb-1.5">🎯 عدد الجولات</p>
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    {[1, 3, 5].map((r) => (
-                      <Pill key={r} active={rounds === r} onClick={() => setRounds(r)}>{r}</Pill>
-                    ))}
-                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={99}
+                    value={rounds}
+                    onChange={(e) => {
+                      const v = parseInt(e.target.value, 10);
+                      setRounds(isNaN(v) || v < 1 ? 1 : v);
+                    }}
+                    className="w-full rounded-xl px-3 py-2 mb-3 font-tajawal text-center focus:outline-none"
+                    style={{ backgroundColor: 'hsla(195, 60%, 12%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.3)', color: 'hsl(40, 100%, 95%)' }}
+                  />
 
                   <p className="text-cream/60 text-xs font-tajawal mb-1.5">🚀 البادئ</p>
                   <div className="flex flex-wrap gap-1.5">
@@ -323,7 +351,9 @@ interface TeamCardProps {
   players: any[];
 }
 const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }: TeamCardProps) => {
-  const selectedHex = swatches.find(s => s.key === selected)?.hex || swatches[0].hex;
+  const selectedHex = selected.startsWith('#')
+    ? selected
+    : (swatches.find(s => s.key === selected)?.hex || swatches[0].hex);
   return (
     <div className="rounded-2xl p-4" style={{ background: 'hsla(192, 55%, 14%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.18)' }}>
       <h4 className="text-cream/80 font-tajawal font-bold text-base mb-3 text-center" style={{ color: selectedHex }}>{title}</h4>
@@ -336,7 +366,7 @@ const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }
       />
 
       <p className="text-cream/55 text-[11px] font-tajawal mb-2 text-center">اللون</p>
-      <div className="grid grid-cols-4 gap-2 mb-3">
+      <div className="grid grid-cols-4 gap-2 mb-2">
         {swatches.map((sw) => {
           const active = selected === sw.key;
           return (
@@ -356,6 +386,28 @@ const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }
             />
           );
         })}
+      </div>
+      <div className="flex items-center gap-2 mb-3" dir="ltr">
+        <input
+          type="color"
+          value={selectedHex}
+          onChange={(e) => onSelect(e.target.value)}
+          className="w-9 h-9 rounded-md cursor-pointer bg-transparent border-0 p-0"
+          title="لون مخصص"
+        />
+        <input
+          type="text"
+          value={selectedHex}
+          onChange={(e) => {
+            const v = e.target.value.trim();
+            if (/^#?[0-9A-Fa-f]{0,6}$/.test(v)) {
+              onSelect(v.startsWith('#') ? v : `#${v}`);
+            }
+          }}
+          placeholder="#RRGGBB"
+          className="flex-1 rounded-md px-2 py-1.5 font-mono text-xs focus:outline-none"
+          style={{ backgroundColor: 'hsla(195, 60%, 12%, 0.7)', border: '1px solid hsla(45, 60%, 55%, 0.25)', color: 'hsl(40, 100%, 95%)' }}
+        />
       </div>
 
       {players.length > 0 && (
