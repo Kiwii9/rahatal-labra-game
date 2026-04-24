@@ -18,8 +18,6 @@ const Index = () => {
   const [showJoin, setShowJoin] = useState(false);
   const [authLoading, setAuthLoading] = useState<string | null>(null);
   const [authError, setAuthError] = useState("");
-  const [showDebug, setShowDebug] = useState(false);
-  const [debugCode, setDebugCode] = useState("");
   const [showEmailAuth, setShowEmailAuth] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
