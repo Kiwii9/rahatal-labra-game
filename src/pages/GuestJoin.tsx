@@ -70,11 +70,23 @@ const GuestJoin = () => {
   const handleFileUpload = async (file: File) => {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) { setError('حجم الصورة يجب أن يكون أقل من 2MB'); return; }
+    const allowed = ['image/png', 'image/jpeg', 'image/webp', 'image/gif'];
+    if (!allowed.includes(file.type)) { setError('نوع الصورة غير مدعوم (PNG/JPG/WEBP/GIF فقط)'); return; }
     setError("");
     setUploading(true);
     try {
-      const ext = file.name.split('.').pop() || 'png';
-      const path = `players/${crypto.randomUUID()}.${ext}`;
+      // Storage RLS requires an authenticated identity. For anonymous guests,
+      // create an anonymous Supabase session so uploads land under their own
+      // <uid>/ folder (no one else can overwrite them).
+      let { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        const { data: anonData, error: anonErr } = await (supabase.auth as any).signInAnonymously?.() ?? { data: null, error: new Error('Anonymous auth unavailable') };
+        if (anonErr) throw anonErr;
+        user = anonData?.user ?? null;
+      }
+      if (!user) throw new Error('تعذر تجهيز جلسة الرفع');
+      const ext = (file.name.split('.').pop() || 'png').toLowerCase().replace(/[^a-z0-9]/g, '');
+      const path = `${user.id}/${crypto.randomUUID()}.${ext}`;
       const { error: upErr } = await supabase.storage.from('avatars').upload(path, file, {
         contentType: file.type, cacheControl: '3600', upsert: false,
       });
