@@ -195,6 +195,7 @@ const Game = () => {
           category={currentQuestion.category} isHost={isHost}
           answerRevealed={answerRevealed} currentTurnColor={currentTurnColor}
           team1Name={team1Name} team2Name={team2Name}
+          timeLimit={perQuestionTime}
           onCorrectTeam1={() => awardHex('team1')} onCorrectTeam2={() => awardHex('team2')}
           onWrong={handleWrong} onClose={() => { setSelectedCell(null); setCurrentQuestion(null); }}
         />
