@@ -124,10 +124,24 @@ const Lobby = () => {
           animate={{ opacity: 1, y: 0 }}
           style={{ background: cardBg, border: cardBorder, boxShadow: '0 30px 80px rgba(0,0,0,0.6)' }}
         >
-          {/* Title */}
-          <div className="mb-4 text-center">
-            <GameTitle hostName={hostName} className="scale-75 origin-center" />
-          </div>
+              {/* Title + Home button */}
+              <div className="mb-4 relative">
+                <button
+                  onClick={() => navigate('/')}
+                  className="absolute top-0 right-0 z-10 px-3 py-2 rounded-xl font-tajawal text-xs font-bold transition-all"
+                  style={{
+                    background: 'hsla(195, 60%, 12%, 0.8)',
+                    color: 'hsl(45, 92%, 65%)',
+                    border: '1px solid hsla(45, 90%, 55%, 0.4)',
+                  }}
+                  title="العودة للرئيسية"
+                >
+                  🏠 الرئيسية
+                </button>
+                <div className="text-center">
+                  <GameTitle hostName={hostName} className="scale-75 origin-center" />
+                </div>
+              </div>
 
           {loading && !room && (
             <div className="text-center py-10">
