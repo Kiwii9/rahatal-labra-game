@@ -9,7 +9,6 @@ export type BuzzerState = 'idle' | 'open' | 'locked' | 'rebound' | 'cooldown';
 
 export interface RoomData {
   id: string;
-  pin: string;
   room_code?: string | null;
   host_id: string | null;
   host_name: string;
@@ -41,18 +40,20 @@ export interface PlayerData {
   created_at: string;
 }
 
-function generatePin(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+// Cryptographically-secure random selection from a charset.
+function secureRandomString(charset: string, length: number): string {
+  const out = new Array<string>(length);
+  const buf = new Uint32Array(length);
+  crypto.getRandomValues(buf);
+  for (let i = 0; i < length; i++) {
+    out[i] = charset.charAt(buf[i] % charset.length);
+  }
+  return out.join('');
 }
 
 // Generate readable 8-char code (no ambiguous chars: 0/O, 1/I)
 function generateRoomCode(): string {
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return result;
+  return secureRandomString('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', 8);
 }
 
 export function useRoom() {
@@ -67,14 +68,12 @@ export function useRoom() {
     setError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      const pin = generatePin();
       const room_code = generateRoomCode();
       const board = generateBoard();
 
       const { data, error: err } = await supabase
         .from('rooms')
         .insert({
-          pin,
           room_code,
           host_id: user?.id ?? null,
           host_name: hostName,
@@ -84,9 +83,6 @@ export function useRoom() {
         .single();
 
       if (err) throw err;
-      // Note: no separate PLAYER activation_code is created.
-      // The room_code itself is the join code (unlimited uses, expires when
-      // the host closes the room or after 24h — enforced in GuestJoin).
       setRoom(data as unknown as RoomData);
       return data as unknown as RoomData;
     } catch (e: any) {
@@ -97,15 +93,15 @@ export function useRoom() {
     }
   }, []);
 
-  // Join an existing room by PIN
-  const joinRoom = useCallback(async (pin: string) => {
+  // Join an existing room by room code
+  const joinRoom = useCallback(async (code: string) => {
     setLoading(true);
     setError(null);
     try {
-      const { data, error: err } = await supabase
+      const { data, error: err } = await (supabase as any)
         .from('rooms')
         .select('*')
-        .eq('pin', pin)
+        .eq('room_code', code)
         .single();
 
       if (err || !data) throw new Error('الغرفة غير موجودة');
@@ -139,14 +135,12 @@ export function useRoom() {
         table: 'players',
         filter: `room_id=eq.${room.id}`,
       }, () => {
-        // Refetch players on any change
         supabase.from('players').select('*').eq('room_id', room.id).then(({ data }) => {
           if (data) setPlayers(data as unknown as PlayerData[]);
         });
       })
       .subscribe();
 
-    // Initial fetch of players
     supabase.from('players').select('*').eq('room_id', room.id).then(({ data }) => {
       if (data) setPlayers(data as unknown as PlayerData[]);
     });
