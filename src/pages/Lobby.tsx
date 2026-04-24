@@ -98,6 +98,8 @@ const Lobby = () => {
       t2: team2Name,
       t1c: team1EngineColor,
       t2c: team2EngineColor,
+      t1hex: team1Swatch.startsWith('#') ? team1Swatch : (ORANGE_SWATCHES.find(s => s.key === team1Swatch)?.hex || '#f28b44'),
+      t2hex: team2Swatch.startsWith('#') ? team2Swatch : (BLUE_SWATCHES.find(s => s.key === team2Swatch)?.hex || '#4a80e8'),
       host: hostName,
       grid: String(gridSize),
       time: timeLimit === null ? 'inf' : String(timeLimit),
