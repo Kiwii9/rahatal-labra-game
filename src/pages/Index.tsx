@@ -7,7 +7,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { lovable } from "@/integrations/lovable/index";
 import { supabase } from "@/integrations/supabase/client";
 import { GoogleIcon, AppleIcon, EmailIcon } from "@/components/icons/AuthIcons";
-import { validateZidPurchase, validateDebugCode } from "@/lib/zidMockService";
+import { validateHostAccess, isDeveloperEmail } from "@/lib/zidMockService";
 import GameTitle from "@/components/game/GameTitle";
 import GameFooter from "@/components/game/GameFooter";
 
@@ -29,25 +29,6 @@ const Index = () => {
 
   // Check if already logged in on mount & listen for auth changes
   useEffect(() => {
-    // Dev-only: log debug codes to console (NEVER show in UI placeholders)
-    if (import.meta.env.DEV) {
-      // eslint-disable-next-line no-console
-      console.groupCollapsed('%c🛠 Rahhal · Debug Activation Codes', 'color:#f28b44;font-weight:bold');
-      // eslint-disable-next-line no-console
-      console.table([
-        { code: 'RAHAAL2024', type: 'DEBUG' },
-        { code: 'TESTHOST001', type: 'HOST (test)' },
-        { code: 'TESTGUEST002', type: 'PLAYER (test)' },
-        { code: 'ADMIN_TEST', type: 'DEBUG' },
-        { code: 'DEBUG_ROOM_001', type: 'DEBUG' },
-        { code: 'QUICKTEST123', type: 'DEBUG' },
-      ]);
-      // eslint-disable-next-line no-console
-      console.info('These codes are for development only. Remove before production.');
-      // eslint-disable-next-line no-console
-      console.groupEnd();
-    }
-
     const checkProfile = async (userId: string, userEmail?: string | null) => {
       // Use maybeSingle to avoid 406 when no profile row exists yet
       const { data: profile } = await (supabase as any)
@@ -116,28 +97,21 @@ const Index = () => {
 
   const handlePurchaseValidation = async () => {
     setAuthError("");
-    const result = await validateZidPurchase(email || "");
-    const codeValid = validateDebugCode(purchaseCode);
-    if (result.valid || codeValid) {
+    // All validation is server-side via consume_activation_code RPC
+    // (or developer-email bypass enforced by isDeveloperEmail).
+    const result = await validateHostAccess(purchaseCode);
+    if (result.valid) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         await (supabase as any).from('profiles').update({
-          purchase_code: purchaseCode || result.purchaseId,
+          purchase_code: purchaseCode || 'DEV-ACCESS',
           purchase_verified: true,
           display_name: hostName,
         } as any).eq('user_id', user.id);
       }
       navigate("/lobby");
     } else {
-      setAuthError("رمز الشراء غير صالح. يرجى شراء اللعبة من متجر Zid أو إدخال رمز صالح.");
-    }
-  };
-
-  const handleDebugBypass = () => {
-    if (validateDebugCode(debugCode)) {
-      navigate("/lobby");
-    } else {
-      setAuthError("رمز غير صالح");
+      setAuthError(result.message || "رمز الشراء غير صالح. يرجى شراء اللعبة من متجر Zid أو إدخال رمز صالح.");
     }
   };
 
