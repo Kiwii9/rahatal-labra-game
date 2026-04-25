@@ -107,28 +107,33 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
     botInner.reverse().map((p) => `L ${p}`).join(' ') +
     ` L ${frameLeft + 4},${gridBottom - HEX_SIZE / 2} Z`;
 
-  // Left filler: outer = straight line at frameLeft; inner = jagged along left edge of column 0
+  // Left filler: jagged inner edge hugs ALL hexes whose left side is exposed.
+  // For odd rows the leftmost hex is shifted right by HEX_W/2, so the column-0
+  // hex on those rows has its full left side exposed AND the column-0 hex on
+  // the adjacent even rows still has its bottom-left vertex exposed.
   const leftInner: string[] = [];
   for (let row = 0; row < GRID_ROWS; row++) {
     const [cx, cy] = hexCenter(row, 0, ox, oy);
-    // Add the three left vertices of the hex (upper-left, far-left, lower-left)
+    // Three left-edge vertices per hex: upper-shoulder, far-left, lower-shoulder
     leftInner.push(`${cx - HEX_W / 2},${cy - HEX_SIZE / 2}`);
+    leftInner.push(`${cx - HEX_W},${cy}`);
     leftInner.push(`${cx - HEX_W / 2},${cy + HEX_SIZE / 2}`);
   }
-  const leftPath = `M ${frameLeft},${frameTop + 4} L ${frameLeft},${frameBottom - 4} L ${gridLeft + 2},${frameBottom - 4} ` +
+  const leftPath = `M ${frameLeft},${frameTop} L ${frameLeft},${frameBottom} ` +
     leftInner.reverse().map((p) => `L ${p}`).join(' ') +
-    ` L ${gridLeft + 2},${frameTop + 4} Z`;
+    ` Z`;
 
-  // Right filler: jagged inner along last column
+  // Right filler: mirror of left
   const rightInner: string[] = [];
   for (let row = 0; row < GRID_ROWS; row++) {
     const [cx, cy] = hexCenter(row, GRID_COLS - 1, ox, oy);
     rightInner.push(`${cx + HEX_W / 2},${cy - HEX_SIZE / 2}`);
+    rightInner.push(`${cx + HEX_W},${cy}`);
     rightInner.push(`${cx + HEX_W / 2},${cy + HEX_SIZE / 2}`);
   }
-  const rightPath = `M ${frameRight},${frameTop + 4} L ${frameRight},${frameBottom - 4} L ${gridRight - 2},${frameBottom - 4} ` +
+  const rightPath = `M ${frameRight},${frameTop} L ${frameRight},${frameBottom} ` +
     rightInner.reverse().map((p) => `L ${p}`).join(' ') +
-    ` L ${gridRight - 2},${frameTop + 4} Z`;
+    ` Z`;
 
   return (
     <div className="w-full flex justify-center">
