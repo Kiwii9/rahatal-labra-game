@@ -7,6 +7,14 @@
 // ============================
 import { motion } from "framer-motion";
 import type { HexCell as HexCellType } from "@/lib/gameLogic";
+import { getIconByKey } from "@/components/icons/AvatarIcons";
+
+export interface HexBoardPlayer {
+  id: string;
+  name: string;
+  team: 'team1' | 'team2' | string;
+  avatar_url?: string | null;
+}
 
 interface HexBoardProps {
   board: HexCellType[];
@@ -15,6 +23,9 @@ interface HexBoardProps {
   team2Color: 'terracotta' | 'blue';
   onHexClick: (cell: HexCellType) => void;
   disabled?: boolean;
+  players?: HexBoardPlayer[];
+  team1Name?: string;
+  team2Name?: string;
 }
 
 // Royal palette
