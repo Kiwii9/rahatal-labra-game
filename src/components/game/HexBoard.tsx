@@ -66,7 +66,7 @@ function hexCenter(row: number, col: number, ox: number, oy: number): [number, n
   return [x, y];
 }
 
-const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disabled }: HexBoardProps) => {
+const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disabled, players = [], team1Name, team2Name }: HexBoardProps) => {
   const team1Hex = team1Color === 'terracotta' ? PALETTE.terracotta : PALETTE.blue;
   const team1Deep = team1Color === 'terracotta' ? PALETTE.terracottaDeep : PALETTE.blueDeep;
   const team2Hex = team2Color === 'terracotta' ? PALETTE.terracotta : PALETTE.blue;
