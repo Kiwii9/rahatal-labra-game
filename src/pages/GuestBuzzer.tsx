@@ -23,6 +23,7 @@ const GuestBuzzer = () => {
 
   // Live room snapshot
   const [room, setRoom] = useState<any>(null);
+  const [players, setPlayers] = useState<any[]>([]);
   const [connecting, setConnecting] = useState(true);
 
   useEffect(() => {
@@ -33,9 +34,17 @@ const GuestBuzzer = () => {
       if (data) setRoom(data);
       setConnecting(false);
     });
+    supabase.from('players').select('*').eq('room_id', roomId).then(({ data }) => {
+      if (!cancelled && data) setPlayers(data);
+    });
     const ch = supabase.channel(`buzzer-room-${roomId}`)
       .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'rooms', filter: `id=eq.${roomId}` },
         (payload) => setRoom(payload.new))
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'players', filter: `room_id=eq.${roomId}` }, () => {
+        supabase.from('players').select('*').eq('room_id', roomId).then(({ data }) => {
+          if (data) setPlayers(data);
+        });
+      })
       .subscribe();
     return () => { cancelled = true; supabase.removeChannel(ch); };
   }, [roomId]);
@@ -50,7 +59,10 @@ const GuestBuzzer = () => {
   const myColorEngine = team === 'team1' ? team1Color : team2Color;
   const teamColorHex = myColorEngine === 'blue' ? 'hsl(222, 70%, 55%)' : 'hsl(25, 87%, 58%)';
 
-  const board: HexCell[] | null = room?.board || null;
+  // Sanitize the board for guests: never reveal which cells are golden.
+  const board: HexCell[] | null = room?.board
+    ? (room.board as HexCell[]).map((c) => ({ ...c, isGolden: false }))
+    : null;
 
   const handleBuzz = () => {
     if (!canBuzz) return;
