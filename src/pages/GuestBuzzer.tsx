@@ -153,6 +153,9 @@ const GuestBuzzer = () => {
             team2Color={team2Color}
             onHexClick={() => {}}
             disabled
+            players={players}
+            team1Name={room?.team1_name}
+            team2Name={room?.team2_name}
           />
         </div>
       )}
