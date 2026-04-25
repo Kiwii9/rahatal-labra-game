@@ -146,7 +146,6 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
     rightInner.reverse().map((p) => `L ${p}`).join(' ') +
     ` Z`;
 
-  return (
   // Players grouped by team for roster display
   const team1Players = players.filter(p => p.team === 'team1');
   const team2Players = players.filter(p => p.team === 'team2');
