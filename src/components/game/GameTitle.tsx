@@ -39,19 +39,24 @@ const GameTitle = ({ hostName = "رحّال", className = "", editable = false, 
         style={{ textShadow: '0 2px 8px rgba(0,0,0,0.4)' }}>
         
         <span style={{ color: 'hsl(var(--cream))' }}>مع </span>
-        {editable ?
-        <span
-          contentEditable
-          suppressContentEditableWarning
-          className="outline-none border-b-2 border-dashed px-2 focus:border-primary"
-          style={{ color: '#f28b44', borderColor: 'rgba(242,139,68,0.4)' }}
-          onBlur={(e) => onHostNameChange?.(e.currentTarget.textContent || 'رحّال')}>
-          
-            {hostName}
-          </span> :
-
-        <span style={{ color: '#f28b44' }}>{hostName}</span>
-        }
+        {editable ? (
+          <input
+            type="text"
+            value={hostName}
+            onChange={(e) => onHostNameChange?.(e.target.value || 'رحّال')}
+            className="bg-transparent outline-none border-b-2 border-dashed px-2 focus:border-primary text-center font-tajawal font-bold inline-block"
+            style={{
+              color: '#f28b44',
+              borderColor: 'rgba(242,139,68,0.4)',
+              width: `${Math.max(hostName.length, 4) + 2}ch`,
+              fontSize: 'inherit',
+              lineHeight: 'inherit',
+            }}
+            dir="rtl"
+          />
+        ) : (
+          <span style={{ color: '#f28b44' }}>{hostName}</span>
+        )}
       </div>
       <p className="text-cream/40 text-sm md:text-base mt-2 font-tajawal">
         تحدي المعرفة والسرعة
