@@ -7,6 +7,14 @@
 // ============================
 import { motion } from "framer-motion";
 import type { HexCell as HexCellType } from "@/lib/gameLogic";
+import { getIconByKey } from "@/components/icons/AvatarIcons";
+
+export interface HexBoardPlayer {
+  id: string;
+  name: string;
+  team: 'team1' | 'team2' | string;
+  avatar_url?: string | null;
+}
 
 interface HexBoardProps {
   board: HexCellType[];
@@ -15,6 +23,9 @@ interface HexBoardProps {
   team2Color: 'terracotta' | 'blue';
   onHexClick: (cell: HexCellType) => void;
   disabled?: boolean;
+  players?: HexBoardPlayer[];
+  team1Name?: string;
+  team2Name?: string;
 }
 
 // Royal palette
@@ -55,7 +66,7 @@ function hexCenter(row: number, col: number, ox: number, oy: number): [number, n
   return [x, y];
 }
 
-const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disabled }: HexBoardProps) => {
+const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disabled, players = [], team1Name, team2Name }: HexBoardProps) => {
   const team1Hex = team1Color === 'terracotta' ? PALETTE.terracotta : PALETTE.blue;
   const team1Deep = team1Color === 'terracotta' ? PALETTE.terracottaDeep : PALETTE.blueDeep;
   const team2Hex = team2Color === 'terracotta' ? PALETTE.terracotta : PALETTE.blue;
@@ -107,31 +118,47 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
     botInner.reverse().map((p) => `L ${p}`).join(' ') +
     ` L ${frameLeft + 4},${gridBottom - HEX_SIZE / 2} Z`;
 
-  // Left filler: outer = straight line at frameLeft; inner = jagged along left edge of column 0
+  // Left filler: jagged inner edge hugs ALL hexes whose left side is exposed.
+  // For odd rows the leftmost hex is shifted right by HEX_W/2, so the column-0
+  // hex on those rows has its full left side exposed AND the column-0 hex on
+  // the adjacent even rows still has its bottom-left vertex exposed.
   const leftInner: string[] = [];
   for (let row = 0; row < GRID_ROWS; row++) {
     const [cx, cy] = hexCenter(row, 0, ox, oy);
-    // Add the three left vertices of the hex (upper-left, far-left, lower-left)
+    // Three left-edge vertices per hex: upper-shoulder, far-left, lower-shoulder
     leftInner.push(`${cx - HEX_W / 2},${cy - HEX_SIZE / 2}`);
+    leftInner.push(`${cx - HEX_W},${cy}`);
     leftInner.push(`${cx - HEX_W / 2},${cy + HEX_SIZE / 2}`);
   }
-  const leftPath = `M ${frameLeft},${frameTop + 4} L ${frameLeft},${frameBottom - 4} L ${gridLeft + 2},${frameBottom - 4} ` +
+  const leftPath = `M ${frameLeft},${frameTop} L ${frameLeft},${frameBottom} ` +
     leftInner.reverse().map((p) => `L ${p}`).join(' ') +
-    ` L ${gridLeft + 2},${frameTop + 4} Z`;
+    ` Z`;
 
-  // Right filler: jagged inner along last column
+  // Right filler: mirror of left
   const rightInner: string[] = [];
   for (let row = 0; row < GRID_ROWS; row++) {
     const [cx, cy] = hexCenter(row, GRID_COLS - 1, ox, oy);
     rightInner.push(`${cx + HEX_W / 2},${cy - HEX_SIZE / 2}`);
+    rightInner.push(`${cx + HEX_W},${cy}`);
     rightInner.push(`${cx + HEX_W / 2},${cy + HEX_SIZE / 2}`);
   }
-  const rightPath = `M ${frameRight},${frameTop + 4} L ${frameRight},${frameBottom - 4} L ${gridRight - 2},${frameBottom - 4} ` +
+  const rightPath = `M ${frameRight},${frameTop} L ${frameRight},${frameBottom} ` +
     rightInner.reverse().map((p) => `L ${p}`).join(' ') +
-    ` L ${gridRight - 2},${frameTop + 4} Z`;
+    ` Z`;
+
+  // Players grouped by team for roster display
+  const team1Players = players.filter(p => p.team === 'team1');
+  const team2Players = players.filter(p => p.team === 'team2');
 
   return (
-    <div className="w-full flex justify-center">
+    <div className="w-full flex flex-col items-center gap-2">
+      {players.length > 0 && (
+        <PlayerRoster
+          players={team1Players}
+          label={team1Name || 'الفريق الأول'}
+          accent={team1Hex}
+        />
+      )}
       <svg
         viewBox={`${frameLeft} ${frameTop} ${svgW} ${svgH}`}
         className="w-full max-w-[640px] md:max-w-[760px] h-auto"
@@ -306,8 +333,69 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
           );
         })}
       </svg>
+      {players.length > 0 && (
+        <PlayerRoster
+          players={team2Players}
+          label={team2Name || 'الفريق الثاني'}
+          accent={team2Hex}
+        />
+      )}
     </div>
   );
 };
+
+// Avatar chip helper used in PlayerRoster
+const ICON_PREFIX = 'icon:';
+const PlayerChip = ({ p, accent }: { p: HexBoardPlayer; accent: string }) => {
+  const url = p.avatar_url || `${ICON_PREFIX}crown`;
+  const isIcon = url.startsWith(ICON_PREFIX);
+  const def = isIcon ? getIconByKey(url.slice(ICON_PREFIX.length)) : null;
+  const Comp = def?.Comp;
+  return (
+    <div
+      className="flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1"
+      style={{
+        background: `${accent}18`,
+        border: `1px solid ${accent}55`,
+      }}
+      title={p.name}
+    >
+      <div
+        className="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden"
+        style={{
+          background: 'hsla(195, 60%, 12%, 0.7)',
+          border: `1.5px solid ${accent}`,
+          color: accent,
+        }}
+      >
+        {isIcon
+          ? (Comp ? <Comp width={16} height={16} /> : null)
+          : <img src={url} alt="" className="w-full h-full object-cover" />}
+      </div>
+      <span
+        className="font-tajawal font-bold text-xs max-w-[80px] truncate"
+        style={{ color: 'hsl(40, 100%, 92%)' }}
+      >
+        {p.name}
+      </span>
+    </div>
+  );
+};
+
+const PlayerRoster = ({ players, label, accent }: { players: HexBoardPlayer[]; label: string; accent: string }) => (
+  <div className="w-full max-w-[760px] flex items-center gap-2 px-1 flex-wrap justify-center">
+    <span
+      className="font-tajawal font-bold text-[11px] px-2 py-0.5 rounded-full"
+      style={{ color: accent, background: `${accent}15`, border: `1px solid ${accent}40` }}
+    >
+      {label}
+    </span>
+    {players.length === 0 ? (
+      <span className="text-cream/40 font-tajawal text-xs">لا يوجد لاعبون</span>
+    ) : (
+      players.map((p) => <PlayerChip key={p.id} p={p} accent={accent} />)
+    )}
+  </div>
+);
 
 export default HexBoard;
