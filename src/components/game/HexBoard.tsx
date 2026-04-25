@@ -147,7 +147,19 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
     ` Z`;
 
   return (
-    <div className="w-full flex justify-center">
+  // Players grouped by team for roster display
+  const team1Players = players.filter(p => p.team === 'team1');
+  const team2Players = players.filter(p => p.team === 'team2');
+
+  return (
+    <div className="w-full flex flex-col items-center gap-2">
+      {players.length > 0 && (
+        <PlayerRoster
+          players={team1Players}
+          label={team1Name || 'الفريق الأول'}
+          accent={team1Hex}
+        />
+      )}
       <svg
         viewBox={`${frameLeft} ${frameTop} ${svgW} ${svgH}`}
         className="w-full max-w-[640px] md:max-w-[760px] h-auto"
