@@ -333,8 +333,69 @@ const HexBoard = ({ board, currentTurn, team1Color, team2Color, onHexClick, disa
           );
         })}
       </svg>
+      {players.length > 0 && (
+        <PlayerRoster
+          players={team2Players}
+          label={team2Name || 'الفريق الثاني'}
+          accent={team2Hex}
+        />
+      )}
     </div>
   );
 };
+
+// Avatar chip helper used in PlayerRoster
+const ICON_PREFIX = 'icon:';
+const PlayerChip = ({ p, accent }: { p: HexBoardPlayer; accent: string }) => {
+  const url = p.avatar_url || `${ICON_PREFIX}crown`;
+  const isIcon = url.startsWith(ICON_PREFIX);
+  const def = isIcon ? getIconByKey(url.slice(ICON_PREFIX.length)) : null;
+  const Comp = def?.Comp;
+  return (
+    <div
+      className="flex items-center gap-1.5 rounded-full pl-1 pr-2.5 py-1"
+      style={{
+        background: `${accent}18`,
+        border: `1px solid ${accent}55`,
+      }}
+      title={p.name}
+    >
+      <div
+        className="w-7 h-7 rounded-full flex items-center justify-center overflow-hidden"
+        style={{
+          background: 'hsla(195, 60%, 12%, 0.7)',
+          border: `1.5px solid ${accent}`,
+          color: accent,
+        }}
+      >
+        {isIcon
+          ? (Comp ? <Comp width={16} height={16} /> : null)
+          : <img src={url} alt="" className="w-full h-full object-cover" />}
+      </div>
+      <span
+        className="font-tajawal font-bold text-xs max-w-[80px] truncate"
+        style={{ color: 'hsl(40, 100%, 92%)' }}
+      >
+        {p.name}
+      </span>
+    </div>
+  );
+};
+
+const PlayerRoster = ({ players, label, accent }: { players: HexBoardPlayer[]; label: string; accent: string }) => (
+  <div className="w-full max-w-[760px] flex items-center gap-2 px-1 flex-wrap justify-center">
+    <span
+      className="font-tajawal font-bold text-[11px] px-2 py-0.5 rounded-full"
+      style={{ color: accent, background: `${accent}15`, border: `1px solid ${accent}40` }}
+    >
+      {label}
+    </span>
+    {players.length === 0 ? (
+      <span className="text-cream/40 font-tajawal text-xs">لا يوجد لاعبون</span>
+    ) : (
+      players.map((p) => <PlayerChip key={p.id} p={p} accent={accent} />)
+    )}
+  </div>
+);
 
 export default HexBoard;
