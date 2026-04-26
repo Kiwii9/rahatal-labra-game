@@ -268,6 +268,7 @@ const Game = () => {
           isOpen={true} letter={selectedCell.letter}
           question={currentQuestion.question} answer={currentQuestion.answer}
           category={currentQuestion.category} isHost={isHost}
+          imageUrl={currentQuestion.imageUrl} videoUrl={currentQuestion.videoUrl}
           answerRevealed={answerRevealed} currentTurnColor={currentTurnColor}
           team1Name={team1Name} team2Name={team2Name}
           timeLimit={perQuestionTime}
