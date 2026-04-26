@@ -11,6 +11,10 @@ import { QRCodeSVG } from "qrcode.react";
 import { useRoom } from "@/hooks/useRoom";
 import GameTitle from "@/components/game/GameTitle";
 import GameFooter from "@/components/game/GameFooter";
+import { supabase } from "@/integrations/supabase/client";
+import QuestionSourcePicker, { type QuestionSource } from "@/components/lobby/QuestionSourcePicker";
+import CustomQuestionAuthor, { type CustomQuestionMap } from "@/components/lobby/CustomQuestionAuthor";
+import { customCoverage } from "@/lib/questionResolver";
 
 type GridSize = 7 | 6 | 5;
 type TeamColorKey = 'terracotta' | 'blue';
