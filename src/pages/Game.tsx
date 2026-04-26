@@ -43,7 +43,7 @@ const Game = () => {
   const [loading, setLoading] = useState(true);
 
   const [selectedCell, setSelectedCell] = useState<HexCell | null>(null);
-  const [currentQuestion, setCurrentQuestion] = useState<{ question: string; answer: string; category: string } | null>(null);
+  const [currentQuestion, setCurrentQuestion] = useState<ResolvedQuestion | null>(null);
   const [answerRevealed, setAnswerRevealed] = useState(false);
   const [showGameStartModal, setShowGameStartModal] = useState(true);
   const [gameStarted, setGameStarted] = useState(false);
@@ -129,7 +129,7 @@ const Game = () => {
       return;
     }
 
-    const q = getQuestionForLetter(cell.letter);
+    const q = resolveQuestion(cell.letter, roomRow);
     setSelectedCell(cell);
     setCurrentQuestion(q);
     setAnswerRevealed(false);
