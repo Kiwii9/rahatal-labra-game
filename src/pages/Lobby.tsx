@@ -239,6 +239,23 @@ const Lobby = () => {
                 </div>
               </div>
 
+              {/* Question source */}
+              <QuestionSourcePicker
+                value={questionSource}
+                onChange={setQuestionSource}
+                customCount={coverage.filled}
+                totalLetters={coverage.total}
+              />
+
+              {questionSource === 'custom' && (
+                <CustomQuestionAuthor
+                  value={customQuestions}
+                  onChange={setCustomQuestions}
+                  hostUid={hostUid}
+                  roomId={room.id}
+                />
+              )}
+
               {/* Host name */}
               <div className="max-w-md mx-auto w-full">
                 <label className="text-cream/60 text-sm font-tajawal block mb-1 text-center">اسم المضيف</label>
