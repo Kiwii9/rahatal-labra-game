@@ -11,6 +11,10 @@ import { QRCodeSVG } from "qrcode.react";
 import { useRoom } from "@/hooks/useRoom";
 import GameTitle from "@/components/game/GameTitle";
 import GameFooter from "@/components/game/GameFooter";
+import { supabase } from "@/integrations/supabase/client";
+import QuestionSourcePicker, { type QuestionSource } from "@/components/lobby/QuestionSourcePicker";
+import CustomQuestionAuthor, { type CustomQuestionMap } from "@/components/lobby/CustomQuestionAuthor";
+import { customCoverage } from "@/lib/questionResolver";
 
 type GridSize = 7 | 6 | 5;
 type TeamColorKey = 'terracotta' | 'blue';
@@ -64,7 +68,17 @@ const Lobby = () => {
   const [timeLimit, setTimeLimit] = useState<number | null>(null); // null = ∞
   const [rounds, setRounds] = useState<number>(1);
   const [starter, setStarter] = useState<'team1' | 'team2' | 'random'>('random');
+  const [questionSource, setQuestionSource] = useState<QuestionSource>('builtin');
+  const [customQuestions, setCustomQuestions] = useState<CustomQuestionMap>({});
+  const [hostUid, setHostUid] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setHostUid(data.user?.id ?? null));
+  }, []);
+
+  const coverage = customCoverage(customQuestions);
+  const customReady = questionSource === 'builtin' || coverage.filled === coverage.total;
 
   // Map decorative swatches → engine team colors (only terracotta/blue understood by game logic)
   const team1EngineColor: TeamColorKey = team1Swatch === 'blue' || team1Swatch === 'navy' || team1Swatch === 'teal' || team1Swatch === 'violet' ? 'blue' : 'terracotta';
@@ -82,6 +96,10 @@ const Lobby = () => {
 
   const startGame = async () => {
     if (!room) return;
+    if (!customReady) {
+      alert(`أكمل أسئلة جميع الحروف أولاً (${coverage.filled}/${coverage.total}). الحروف المتبقية: ${coverage.missing.join('، ')}`);
+      return;
+    }
     await updateRoom({
       status: 'playing',
       host_name: hostName,
@@ -89,6 +107,8 @@ const Lobby = () => {
       team2_name: team2Name,
       team1_color: team1EngineColor,
       team2_color: team2EngineColor,
+      question_source: questionSource,
+      custom_questions: questionSource === 'custom' ? customQuestions : null,
     } as any);
 
     const params = new URLSearchParams({
@@ -219,6 +239,23 @@ const Lobby = () => {
                 </div>
               </div>
 
+              {/* Question source */}
+              <QuestionSourcePicker
+                value={questionSource}
+                onChange={setQuestionSource}
+                customCount={coverage.filled}
+                totalLetters={coverage.total}
+              />
+
+              {questionSource === 'custom' && (
+                <CustomQuestionAuthor
+                  value={customQuestions}
+                  onChange={setCustomQuestions}
+                  hostUid={hostUid}
+                  roomId={room.id}
+                />
+              )}
+
               {/* Host name */}
               <div className="max-w-md mx-auto w-full">
                 <label className="text-cream/60 text-sm font-tajawal block mb-1 text-center">اسم المضيف</label>
@@ -301,15 +338,25 @@ const Lobby = () => {
               </div>
 
               {/* CTA */}
+              {!customReady && (
+                <p className="text-center font-tajawal text-xs" style={{ color: 'hsl(45, 92%, 65%)' }}>
+                  أكمل أسئلة جميع الحروف لبدء اللعبة ({coverage.filled}/{coverage.total})
+                </p>
+              )}
               <motion.button
+                disabled={!customReady}
                 className="w-full max-w-md mx-auto block py-4 rounded-2xl font-tajawal font-[900] text-2xl text-white"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(25, 87%, 58%) 0%, hsl(20, 80%, 42%) 100%)',
-                  boxShadow: '0 0 30px hsla(25, 87%, 58%, 0.45), 0 0 0 2px hsla(45, 90%, 55%, 0.4) inset',
+                  background: customReady
+                    ? 'linear-gradient(135deg, hsl(25, 87%, 58%) 0%, hsl(20, 80%, 42%) 100%)'
+                    : 'linear-gradient(135deg, hsl(195, 30%, 30%) 0%, hsl(195, 30%, 22%) 100%)',
+                  boxShadow: customReady ? '0 0 30px hsla(25, 87%, 58%, 0.45), 0 0 0 2px hsla(45, 90%, 55%, 0.4) inset' : 'none',
                   border: '1px solid hsla(45, 90%, 55%, 0.5)',
+                  opacity: customReady ? 1 : 0.6,
+                  cursor: customReady ? 'pointer' : 'not-allowed',
                 }}
-                whileHover={{ scale: 1.02, boxShadow: '0 0 50px hsla(25, 87%, 58%, 0.7), 0 0 0 2px hsla(45, 90%, 55%, 0.6) inset' }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={customReady ? { scale: 1.02, boxShadow: '0 0 50px hsla(25, 87%, 58%, 0.7), 0 0 0 2px hsla(45, 90%, 55%, 0.6) inset' } : undefined}
+                whileTap={customReady ? { scale: 0.97 } : undefined}
                 onClick={startGame}
               >
                 إنشاء اللعبة
