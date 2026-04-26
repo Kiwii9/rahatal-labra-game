@@ -68,7 +68,17 @@ const Lobby = () => {
   const [timeLimit, setTimeLimit] = useState<number | null>(null); // null = ∞
   const [rounds, setRounds] = useState<number>(1);
   const [starter, setStarter] = useState<'team1' | 'team2' | 'random'>('random');
+  const [questionSource, setQuestionSource] = useState<QuestionSource>('builtin');
+  const [customQuestions, setCustomQuestions] = useState<CustomQuestionMap>({});
+  const [hostUid, setHostUid] = useState<string | null>(null);
   const [initialized, setInitialized] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => setHostUid(data.user?.id ?? null));
+  }, []);
+
+  const coverage = customCoverage(customQuestions);
+  const customReady = questionSource === 'builtin' || coverage.filled === coverage.total;
 
   // Map decorative swatches → engine team colors (only terracotta/blue understood by game logic)
   const team1EngineColor: TeamColorKey = team1Swatch === 'blue' || team1Swatch === 'navy' || team1Swatch === 'teal' || team1Swatch === 'violet' ? 'blue' : 'terracotta';
