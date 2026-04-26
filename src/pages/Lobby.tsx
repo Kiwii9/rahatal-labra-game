@@ -338,15 +338,25 @@ const Lobby = () => {
               </div>
 
               {/* CTA */}
+              {!customReady && (
+                <p className="text-center font-tajawal text-xs" style={{ color: 'hsl(45, 92%, 65%)' }}>
+                  أكمل أسئلة جميع الحروف لبدء اللعبة ({coverage.filled}/{coverage.total})
+                </p>
+              )}
               <motion.button
+                disabled={!customReady}
                 className="w-full max-w-md mx-auto block py-4 rounded-2xl font-tajawal font-[900] text-2xl text-white"
                 style={{
-                  background: 'linear-gradient(135deg, hsl(25, 87%, 58%) 0%, hsl(20, 80%, 42%) 100%)',
-                  boxShadow: '0 0 30px hsla(25, 87%, 58%, 0.45), 0 0 0 2px hsla(45, 90%, 55%, 0.4) inset',
+                  background: customReady
+                    ? 'linear-gradient(135deg, hsl(25, 87%, 58%) 0%, hsl(20, 80%, 42%) 100%)'
+                    : 'linear-gradient(135deg, hsl(195, 30%, 30%) 0%, hsl(195, 30%, 22%) 100%)',
+                  boxShadow: customReady ? '0 0 30px hsla(25, 87%, 58%, 0.45), 0 0 0 2px hsla(45, 90%, 55%, 0.4) inset' : 'none',
                   border: '1px solid hsla(45, 90%, 55%, 0.5)',
+                  opacity: customReady ? 1 : 0.6,
+                  cursor: customReady ? 'pointer' : 'not-allowed',
                 }}
-                whileHover={{ scale: 1.02, boxShadow: '0 0 50px hsla(25, 87%, 58%, 0.7), 0 0 0 2px hsla(45, 90%, 55%, 0.6) inset' }}
-                whileTap={{ scale: 0.97 }}
+                whileHover={customReady ? { scale: 1.02, boxShadow: '0 0 50px hsla(25, 87%, 58%, 0.7), 0 0 0 2px hsla(45, 90%, 55%, 0.6) inset' } : undefined}
+                whileTap={customReady ? { scale: 0.97 } : undefined}
                 onClick={startGame}
               >
                 إنشاء اللعبة
