@@ -96,6 +96,10 @@ const Lobby = () => {
 
   const startGame = async () => {
     if (!room) return;
+    if (!customReady) {
+      alert(`أكمل أسئلة جميع الحروف أولاً (${coverage.filled}/${coverage.total}). الحروف المتبقية: ${coverage.missing.join('، ')}`);
+      return;
+    }
     await updateRoom({
       status: 'playing',
       host_name: hostName,
@@ -103,6 +107,8 @@ const Lobby = () => {
       team2_name: team2Name,
       team1_color: team1EngineColor,
       team2_color: team2EngineColor,
+      question_source: questionSource,
+      custom_questions: questionSource === 'custom' ? customQuestions : null,
     } as any);
 
     const params = new URLSearchParams({
