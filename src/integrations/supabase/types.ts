@@ -176,9 +176,11 @@ export type Database = {
           created_at: string
           current_hex_index: number | null
           current_turn: string
+          custom_questions: Json | null
           host_id: string | null
           host_name: string
           id: string
+          question_source: string
           rebound_expires_at: string | null
           room_code: string | null
           status: string
@@ -197,9 +199,11 @@ export type Database = {
           created_at?: string
           current_hex_index?: number | null
           current_turn?: string
+          custom_questions?: Json | null
           host_id?: string | null
           host_name?: string
           id?: string
+          question_source?: string
           rebound_expires_at?: string | null
           room_code?: string | null
           status?: string
@@ -218,9 +222,11 @@ export type Database = {
           created_at?: string
           current_hex_index?: number | null
           current_turn?: string
+          custom_questions?: Json | null
           host_id?: string | null
           host_name?: string
           id?: string
+          question_source?: string
           rebound_expires_at?: string | null
           room_code?: string | null
           status?: string
