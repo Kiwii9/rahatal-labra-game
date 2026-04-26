@@ -18,9 +18,9 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   generateBoard,
   checkWin,
-  getQuestionForLetter,
   type HexCell,
 } from "@/lib/gameLogic";
+import { resolveQuestion, type ResolvedQuestion } from "@/lib/questionResolver";
 
 const Game = () => {
   const navigate = useNavigate();
