@@ -19,7 +19,7 @@ const GuestJoin = () => {
   const [searchParams] = useSearchParams();
   const initialCode = (searchParams.get("code") || searchParams.get("pin") || "").toUpperCase();
 
-  const [step, setStep] = useState<'code' | 'team' | 'details' | 'waiting'>('code');
+  const [step, setStep] = useState<'code' | 'mode' | 'team' | 'details' | 'waiting'>('code');
   const [roomCode, setRoomCode] = useState(initialCode);
   const [selectedTeam, setSelectedTeam] = useState<'team1' | 'team2' | null>(null);
   const [playerName, setPlayerName] = useState("");
@@ -49,7 +49,7 @@ const GuestJoin = () => {
         setError('انتهت صلاحية رمز الغرفة (٢٤ ساعة)'); return;
       }
       setRoomData(data);
-      setStep('team');
+      setStep('mode');
     } catch (e: any) {
       setError(e.message || 'حدث خطأ في التحقق');
     } finally {
