@@ -11,6 +11,7 @@ import GuestBuzzer from "./pages/GuestBuzzer.tsx";
 import HostController from "./pages/HostController.tsx";
 import AboutUs from "./pages/AboutUs.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import TVView from "./pages/TVView.tsx";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +29,7 @@ const App = () => (
           <Route path="/buzzer" element={<GuestBuzzer />} />
           <Route path="/host-controller" element={<HostController />} />
           <Route path="/about" element={<AboutUs />} />
+          <Route path="/tv" element={<TVView />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
