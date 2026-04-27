@@ -20,13 +20,19 @@ interface CustomQ {
   video_url?: string | null;
 }
 
-export function resolveQuestion(letter: string, room: any): ResolvedQuestion {
+// Pick a question for a letter. If `idx` is provided, use that exact index
+// from the host's custom set — this keeps host, players, and TV in sync.
+// If `idx` is omitted, a random one is chosen (host-side use only).
+export function resolveQuestion(letter: string, room: any, idx?: number | null): ResolvedQuestion {
   const source: string = room?.question_source || "builtin";
   if (source === "custom") {
     const map = (room?.custom_questions || {}) as Record<string, CustomQ[]>;
     const list = map[letter];
     if (Array.isArray(list) && list.length > 0) {
-      const q = list[Math.floor(Math.random() * list.length)];
+      const safeIdx = (typeof idx === 'number' && idx >= 0 && idx < list.length)
+        ? idx
+        : Math.floor(Math.random() * list.length);
+      const q = list[safeIdx];
       return {
         question: q.question,
         answer: q.answer,
@@ -39,6 +45,16 @@ export function resolveQuestion(letter: string, room: any): ResolvedQuestion {
   }
   const q = getQuestionForLetter(letter);
   return { question: q.question, answer: q.answer, category: q.category };
+}
+
+// Pick a fresh random index for a letter's custom question list.
+// Returns null if the letter has no custom questions (resolveQuestion will
+// then fall back to the builtin bank).
+export function pickCustomIndex(letter: string, room: any): number | null {
+  if ((room?.question_source || 'builtin') !== 'custom') return null;
+  const list = (room?.custom_questions || {})[letter];
+  if (!Array.isArray(list) || list.length === 0) return null;
+  return Math.floor(Math.random() * list.length);
 }
 
 // 28-letter Arabic alphabet (game uses the same set as gameLogic)

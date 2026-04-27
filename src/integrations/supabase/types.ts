@@ -169,12 +169,14 @@ export type Database = {
       }
       rooms: {
         Row: {
+          answer_revealed: boolean
           board: Json | null
           buzzer_state: string
           buzzer_team: string | null
           cooldown_expires_at: string | null
           created_at: string
           current_hex_index: number | null
+          current_question_idx: number | null
           current_turn: string
           custom_questions: Json | null
           host_id: string | null
@@ -192,12 +194,14 @@ export type Database = {
           team2_score: number
         }
         Insert: {
+          answer_revealed?: boolean
           board?: Json | null
           buzzer_state?: string
           buzzer_team?: string | null
           cooldown_expires_at?: string | null
           created_at?: string
           current_hex_index?: number | null
+          current_question_idx?: number | null
           current_turn?: string
           custom_questions?: Json | null
           host_id?: string | null
@@ -215,12 +219,14 @@ export type Database = {
           team2_score?: number
         }
         Update: {
+          answer_revealed?: boolean
           board?: Json | null
           buzzer_state?: string
           buzzer_team?: string | null
           cooldown_expires_at?: string | null
           created_at?: string
           current_hex_index?: number | null
+          current_question_idx?: number | null
           current_turn?: string
           custom_questions?: Json | null
           host_id?: string | null

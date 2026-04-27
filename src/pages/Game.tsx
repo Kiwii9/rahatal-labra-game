@@ -20,7 +20,7 @@ import {
   checkWin,
   type HexCell,
 } from "@/lib/gameLogic";
-import { resolveQuestion, type ResolvedQuestion } from "@/lib/questionResolver";
+import { resolveQuestion, pickCustomIndex, type ResolvedQuestion } from "@/lib/questionResolver";
 
 const Game = () => {
   const navigate = useNavigate();
@@ -110,6 +110,32 @@ const Game = () => {
     setGameStarted(true);
   }, []);
 
+  // Sync local answerRevealed → DB so guests + TV reveal in lockstep with host
+  useEffect(() => {
+    if (!isHost || !roomRow?.id) return;
+    if ((roomRow.answer_revealed ?? false) === answerRevealed) return;
+    supabase.from('rooms').update({ answer_revealed: answerRevealed } as any).eq('id', roomRow.id);
+  }, [answerRevealed, isHost, roomRow?.id, roomRow?.answer_revealed]);
+
+  // Guests / TV: when host opens a question (current_hex_index set), mirror it locally
+  useEffect(() => {
+    if (isHost) return;
+    if (!roomRow) return;
+    const idx = roomRow.current_hex_index;
+    if (idx === null || idx === undefined) {
+      setSelectedCell(null);
+      setCurrentQuestion(null);
+      setAnswerRevealed(false);
+      return;
+    }
+    const cell = ((roomRow.board as HexCell[]) || []).find(c => c.index === idx);
+    if (!cell) return;
+    const q = resolveQuestion(cell.letter, roomRow, roomRow.current_question_idx);
+    setSelectedCell(cell);
+    setCurrentQuestion(q);
+    setAnswerRevealed(!!roomRow.answer_revealed);
+  }, [isHost, roomRow]);
+
   // Click hex → show question directly (no per-question interceptor)
   const handleHexClick = useCallback((cell: HexCell) => {
     if (!isHost || cell.status !== 'unclaimed' || winner || !gameStarted) return;
@@ -126,15 +152,38 @@ const Game = () => {
         category: 'سؤال ذهبي',
       });
       setAnswerRevealed(true);
+      // Don't broadcast golden questions to guests/TV (host-only privacy).
       return;
     }
 
-    const q = resolveQuestion(cell.letter, roomRow);
+    // Pick the index ONCE on host, then broadcast so everyone sees the same question
+    const idx = pickCustomIndex(cell.letter, roomRow);
+    const q = resolveQuestion(cell.letter, roomRow, idx);
     setSelectedCell(cell);
     setCurrentQuestion(q);
     setAnswerRevealed(false);
+    if (roomRow?.id) {
+      supabase.from('rooms').update({
+        current_hex_index: cell.index,
+        current_question_idx: idx,
+        answer_revealed: false,
+      } as any).eq('id', roomRow.id);
+    }
     setTimeout(() => sfx.playQuestionReveal(), 300);
-  }, [isHost, winner, gameStarted, sfx, roomRow?.board]);
+  }, [isHost, winner, gameStarted, sfx, roomRow]);
+
+  const clearActiveQuestion = useCallback(async () => {
+    setSelectedCell(null);
+    setCurrentQuestion(null);
+    setAnswerRevealed(false);
+    if (isHost && roomRow?.id) {
+      await supabase.from('rooms').update({
+        current_hex_index: null,
+        current_question_idx: null,
+        answer_revealed: false,
+      } as any).eq('id', roomRow.id);
+    }
+  }, [isHost, roomRow?.id]);
 
   const awardHex = useCallback(async (team: 'team1' | 'team2') => {
     if (!selectedCell || !roomRow) return;
@@ -155,23 +204,27 @@ const Game = () => {
     if (hasWinner) {
       setTimeout(() => sfx.playWin(), 500);
       setWinner(team);
+      try { localStorage.removeItem('lov.activeRoomId'); } catch {}
     }
 
     await supabase.from('rooms').update({
       board: finalBoard as any,
       team1_score: newTeam1Score,
       team2_score: newTeam2Score,
+      current_hex_index: null,
+      current_question_idx: null,
+      answer_revealed: false,
     } as any).eq('id', roomRow.id);
 
     setSelectedCell(null);
     setCurrentQuestion(null);
+    setAnswerRevealed(false);
   }, [selectedCell, roomRow, team1Score, team2Score, sfx]);
 
   const handleWrong = useCallback(() => {
     sfx.playWrong();
-    setSelectedCell(null);
-    setCurrentQuestion(null);
-  }, [sfx]);
+    clearActiveQuestion();
+  }, [sfx, clearActiveQuestion]);
 
   const playAgain = useCallback(async () => {
     if (!roomRow) return;
@@ -182,6 +235,9 @@ const Game = () => {
       team1_score: 0,
       team2_score: 0,
       current_turn: 'team1',
+      current_hex_index: null,
+      current_question_idx: null,
+      answer_revealed: false,
     } as any).eq('id', roomRow.id);
   }, [roomRow]);
 
@@ -199,7 +255,7 @@ const Game = () => {
       <div className="pt-4 pb-2 px-4 relative">
         {isHost && (
           <button
-            onClick={() => navigate('/')}
+            onClick={() => { try { localStorage.removeItem('lov.activeRoomId'); } catch {} navigate('/'); }}
             className="absolute top-4 right-4 z-20 px-3 py-2 rounded-xl font-tajawal text-xs font-bold transition-all hover:scale-105"
             style={{
               background: 'rgba(26,54,68,0.85)',
@@ -273,7 +329,7 @@ const Game = () => {
           team1Name={team1Name} team2Name={team2Name}
           timeLimit={perQuestionTime}
           onCorrectTeam1={() => awardHex('team1')} onCorrectTeam2={() => awardHex('team2')}
-          onWrong={handleWrong} onClose={() => { setSelectedCell(null); setCurrentQuestion(null); }}
+          onWrong={handleWrong} onClose={clearActiveQuestion}
         />
       )}
 
@@ -281,7 +337,7 @@ const Game = () => {
         <WinnerOverlay
           winnerName={winner === 'team1' ? team1Name : team2Name}
           winnerColor={winner === 'team1' ? team1Color : team2Color}
-          onPlayAgain={playAgain} onMainMenu={() => navigate("/")}
+          onPlayAgain={playAgain} onMainMenu={() => { try { localStorage.removeItem('lov.activeRoomId'); } catch {} navigate("/"); }}
         />
       )}
 
