@@ -14,6 +14,8 @@ export interface RoomData {
   host_name: string;
   status: string;
   current_hex_index: number | null;
+  current_question_idx: number | null;
+  answer_revealed: boolean;
   buzzer_state: string;
   buzzer_team: string | null;
   rebound_expires_at: string | null;
@@ -27,6 +29,8 @@ export interface RoomData {
   team1_color: string;
   team2_color: string;
   created_at: string;
+  question_source?: string;
+  custom_questions?: any;
 }
 
 export interface PlayerData {
@@ -39,6 +43,8 @@ export interface PlayerData {
   is_captain: boolean;
   created_at: string;
 }
+
+const ACTIVE_ROOM_KEY = 'lov.activeRoomId';
 
 // Cryptographically-secure random selection from a charset.
 function secureRandomString(charset: string, length: number): string {
@@ -62,12 +68,33 @@ export function useRoom() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Create a new room (host only)
+  // Create a new room — but first try to reuse a stored one (host-only,
+  // status='waiting', same host_id). This keeps the room code stable across
+  // page refreshes so guests don't get "غرفة غير موجودة" after a reload.
   const createRoom = useCallback(async (hostName: string) => {
     setLoading(true);
     setError(null);
     try {
       const { data: { user } } = await supabase.auth.getUser();
+
+      // Try to reuse an existing waiting room owned by this host
+      const storedId = typeof window !== 'undefined' ? localStorage.getItem(ACTIVE_ROOM_KEY) : null;
+      if (storedId) {
+        const { data: existing } = await supabase
+          .from('rooms')
+          .select('*')
+          .eq('id', storedId)
+          .maybeSingle();
+        if (existing
+            && (existing as any).status === 'waiting'
+            && (!user || (existing as any).host_id === user.id)) {
+          setRoom(existing as unknown as RoomData);
+          return existing as unknown as RoomData;
+        }
+        // Stored id is stale; clear it.
+        localStorage.removeItem(ACTIVE_ROOM_KEY);
+      }
+
       const room_code = generateRoomCode();
       const board = generateBoard();
 
@@ -83,6 +110,9 @@ export function useRoom() {
         .single();
 
       if (err) throw err;
+      if (data && typeof window !== 'undefined') {
+        localStorage.setItem(ACTIVE_ROOM_KEY, (data as any).id);
+      }
       setRoom(data as unknown as RoomData);
       return data as unknown as RoomData;
     } catch (e: any) {
@@ -91,6 +121,30 @@ export function useRoom() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  // Regenerate just the room code (host action). The room id stays the same
+  // so connected clients keep their realtime subscriptions.
+  const regenerateRoomCode = useCallback(async (): Promise<string | null> => {
+    if (!room?.id) return null;
+    const room_code = generateRoomCode();
+    const { data, error: err } = await supabase
+      .from('rooms')
+      .update({ room_code } as any)
+      .eq('id', room.id)
+      .select()
+      .single();
+    if (err) {
+      console.error('regenerateRoomCode failed', err);
+      return null;
+    }
+    setRoom(data as unknown as RoomData);
+    return room_code;
+  }, [room?.id]);
+
+  // Clear persisted active room (call on home navigation / game end).
+  const clearStoredRoom = useCallback(() => {
+    if (typeof window !== 'undefined') localStorage.removeItem(ACTIVE_ROOM_KEY);
   }, []);
 
   // Join an existing room by room code
@@ -158,5 +212,5 @@ export function useRoom() {
     if (err) console.error('Room update error:', err);
   }, [room?.id]);
 
-  return { room, players, loading, error, createRoom, joinRoom, updateRoom, setRoom };
+  return { room, players, loading, error, createRoom, joinRoom, updateRoom, setRoom, regenerateRoomCode, clearStoredRoom };
 }
