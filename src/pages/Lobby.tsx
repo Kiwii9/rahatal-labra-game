@@ -57,7 +57,7 @@ const MiniGrid = ({ n }: { n: number }) => {
 
 const Lobby = () => {
   const navigate = useNavigate();
-  const { room, players, loading, createRoom, updateRoom } = useRoom();
+  const { room, players, loading, createRoom, updateRoom, regenerateRoomCode, clearStoredRoom } = useRoom();
 
   const [hostName, setHostName] = useState("رحّال");
   const [gridSize, setGridSize] = useState<GridSize>(5);
@@ -149,7 +149,7 @@ const Lobby = () => {
               {/* Title + Home button */}
               <div className="mb-4 relative">
                 <button
-                  onClick={() => navigate('/')}
+                  onClick={() => { clearStoredRoom(); navigate('/'); }}
                   className="absolute top-0 right-0 z-10 px-3 py-2 rounded-xl font-tajawal text-xs font-bold transition-all"
                   style={{
                     background: 'hsla(195, 60%, 12%, 0.8)',
@@ -193,6 +193,14 @@ const Lobby = () => {
                       style={{ background: 'linear-gradient(135deg, hsl(45, 92%, 50%), hsl(38, 88%, 42%))' }}
                     >
                       نسخ
+                    </button>
+                    <button
+                      onClick={async () => { const c = await regenerateRoomCode(); if (c) console.log('new code', c); }}
+                      className="px-3 py-2 rounded-xl font-tajawal text-sm"
+                      style={{ background: 'hsla(195, 60%, 12%, 0.8)', color: 'hsl(45, 92%, 65%)', border: '1px solid hsla(45, 90%, 55%, 0.4)' }}
+                      title="توليد رمز غرفة جديد"
+                    >
+                      🔄 رمز جديد
                     </button>
                   </div>
                   <p className="text-cream/40 text-xs font-tajawal mt-1" dir="ltr">{guestJoinUrl}</p>
