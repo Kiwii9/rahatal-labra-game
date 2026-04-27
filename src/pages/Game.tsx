@@ -255,7 +255,7 @@ const Game = () => {
       <div className="pt-4 pb-2 px-4 relative">
         {isHost && (
           <button
-            onClick={() => navigate('/')}
+            onClick={() => { try { localStorage.removeItem('lov.activeRoomId'); } catch {} navigate('/'); }}
             className="absolute top-4 right-4 z-20 px-3 py-2 rounded-xl font-tajawal text-xs font-bold transition-all hover:scale-105"
             style={{
               background: 'rgba(26,54,68,0.85)',
@@ -329,7 +329,7 @@ const Game = () => {
           team1Name={team1Name} team2Name={team2Name}
           timeLimit={perQuestionTime}
           onCorrectTeam1={() => awardHex('team1')} onCorrectTeam2={() => awardHex('team2')}
-          onWrong={handleWrong} onClose={() => { setSelectedCell(null); setCurrentQuestion(null); }}
+          onWrong={handleWrong} onClose={clearActiveQuestion}
         />
       )}
 
@@ -337,7 +337,7 @@ const Game = () => {
         <WinnerOverlay
           winnerName={winner === 'team1' ? team1Name : team2Name}
           winnerColor={winner === 'team1' ? team1Color : team2Color}
-          onPlayAgain={playAgain} onMainMenu={() => navigate("/")}
+          onPlayAgain={playAgain} onMainMenu={() => { try { localStorage.removeItem('lov.activeRoomId'); } catch {} navigate("/"); }}
         />
       )}
 
