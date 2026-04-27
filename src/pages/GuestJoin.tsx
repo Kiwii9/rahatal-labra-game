@@ -215,6 +215,63 @@ const GuestJoin = () => {
               </motion.div>
             )}
 
+            {step === 'mode' && (
+              <motion.div key="mode" className="space-y-5 text-center" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
+                <h2 className="text-2xl font-tajawal font-[900] text-cream">كيف تريد المشاهدة؟</h2>
+                <p className="text-cream/50 font-tajawal text-sm">رمز الغرفة: {roomData?.room_code}</p>
+
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setStep('team')}
+                  className="w-full p-5 rounded-2xl text-right transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, hsla(25, 87%, 58%, 0.18), hsla(192, 55%, 14%, 0.9))',
+                    border: '1px solid hsla(25, 87%, 58%, 0.5)',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">🎮</div>
+                    <div className="flex-1 text-right">
+                      <p className="font-tajawal font-[900] text-xl text-cream">ادخل كلاعب</p>
+                      <p className="font-tajawal text-xs text-cream/60 mt-0.5">انضم لفريق وشارك في الإجابة</p>
+                    </div>
+                  </div>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02, y: -2 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => {
+                    if (!roomData?.id) return;
+                    navigate(`/tv?room=${roomData.id}`);
+                  }}
+                  className="w-full p-5 rounded-2xl text-right transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, hsla(45, 90%, 55%, 0.18), hsla(192, 55%, 14%, 0.9))',
+                    border: '1px solid hsla(45, 90%, 55%, 0.5)',
+                    boxShadow: '0 10px 30px rgba(0,0,0,0.4)',
+                  }}
+                >
+                  <div className="flex items-center gap-4">
+                    <div className="text-4xl">📺</div>
+                    <div className="flex-1 text-right">
+                      <p className="font-tajawal font-[900] text-xl text-cream">شاشة العرض (للجمهور)</p>
+                      <p className="font-tajawal text-xs text-cream/60 mt-0.5">مشاهدة فقط — مناسبة لربط بشاشة كبيرة</p>
+                    </div>
+                  </div>
+                </motion.button>
+
+                <button
+                  onClick={() => setStep('code')}
+                  className="text-cream/40 font-tajawal text-xs hover:text-cream/70"
+                >
+                  ← تغيير الرمز
+                </button>
+              </motion.div>
+            )}
+
             {step === 'team' && (
               <motion.div key="team" className="space-y-6 text-center" initial={{ opacity: 0, x: 30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -30 }}>
                 <h2 className="text-2xl font-tajawal font-[900] text-cream">اختر فريقك</h2>
