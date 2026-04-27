@@ -20,7 +20,7 @@ import {
   checkWin,
   type HexCell,
 } from "@/lib/gameLogic";
-import { resolveQuestion, type ResolvedQuestion } from "@/lib/questionResolver";
+import { resolveQuestion, pickCustomIndex, type ResolvedQuestion } from "@/lib/questionResolver";
 
 const Game = () => {
   const navigate = useNavigate();
