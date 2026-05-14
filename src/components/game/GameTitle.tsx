@@ -33,6 +33,7 @@ const GameTitle = ({ hostName = "رحّال", className = "", editable = false, 
         
         <span style={{ color: 'hsl(var(--cream))' }}>خلية </span>
         <span style={{ color: '#f28b44' }} className="text-primary-foreground">الحروف</span>
+        <span className="sr-only"> — تحدي المعرفة والسرعة</span>
       </h1>
       <div
         className="text-lg md:text-2xl lg:text-3xl mt-1 font-tajawal font-bold"
