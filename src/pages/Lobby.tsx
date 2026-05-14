@@ -429,6 +429,8 @@ const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }
               key={sw.key}
               onClick={() => onSelect(sw.key)}
               title={sw.label}
+              aria-label={`اختر اللون ${sw.label}`}
+              aria-pressed={active}
               className="w-9 h-9 mx-auto rounded-full transition-all"
               style={{
                 background: sw.hex,
