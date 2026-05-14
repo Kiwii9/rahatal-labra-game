@@ -119,6 +119,7 @@ const GuestBuzzer = () => {
     <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'hsl(195, 60%, 8%)' }}>
       {/* Header */}
       <div className="pt-4 pb-2 px-4 text-center">
+        <h1 className="sr-only">جرس الإجابة — خلية الحروف</h1>
         <p className="text-cream/60 text-sm font-tajawal">{playerName}</p>
         <div
           className="inline-block px-3 py-1 rounded-full font-tajawal font-bold text-sm mt-1"
