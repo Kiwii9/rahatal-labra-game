@@ -336,6 +336,8 @@ const GuestJoin = () => {
                           key={key}
                           onClick={() => setAvatar(value)}
                           title={label}
+                          aria-label={`اختر الصورة الرمزية ${label}`}
+                          aria-pressed={active}
                           className="aspect-square rounded-full flex items-center justify-center transition-all"
                           style={{
                             background: active
