@@ -215,7 +215,7 @@ const Lobby = () => {
 
               {/* SECTION 1 — Grid Size */}
               <div>
-                <h3 className="text-cream/80 font-tajawal font-bold text-lg mb-3 text-center">حجم اللوحة</h3>
+                <h2 className="text-cream/80 font-tajawal font-bold text-lg mb-3 text-center">حجم اللوحة</h2>
                 <div className="grid grid-cols-3 gap-3 md:gap-4">
                   {([7, 6, 5] as GridSize[]).map((n) => {
                     const active = gridSize === n;
@@ -429,6 +429,8 @@ const TeamCard = ({ title, name, onName, swatches, selected, onSelect, players }
               key={sw.key}
               onClick={() => onSelect(sw.key)}
               title={sw.label}
+              aria-label={`اختر اللون ${sw.label}`}
+              aria-pressed={active}
               className="w-9 h-9 mx-auto rounded-full transition-all"
               style={{
                 background: sw.hex,

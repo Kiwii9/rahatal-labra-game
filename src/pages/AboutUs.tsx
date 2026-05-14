@@ -50,7 +50,7 @@ const AboutUs = () => {
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          رحّـــال
+          من نحن في رحّـــال
         </motion.h1>
         <p className="text-cream/90 text-lg font-tajawal">
           لسنا مجرد صانعي ألعاب، بل نحن معماريو عوالمٍ ومصممو مغامرات.

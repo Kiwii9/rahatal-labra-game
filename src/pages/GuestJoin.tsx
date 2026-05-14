@@ -175,6 +175,7 @@ const GuestJoin = () => {
       <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: 'url(/patterns/tribal-pattern.webp)', backgroundSize: '300px', opacity: 0.05, mixBlendMode: 'soft-light' }} />
 
       <div className="flex-1 flex items-center justify-center p-4 relative z-10">
+        <h1 className="sr-only">الانضمام للعبة خلية الحروف</h1>
         <motion.div
           className="rounded-3xl p-6 md:p-8 max-w-md w-full"
           initial={{ opacity: 0, scale: 0.95 }}
@@ -336,6 +337,8 @@ const GuestJoin = () => {
                           key={key}
                           onClick={() => setAvatar(value)}
                           title={label}
+                          aria-label={`اختر الصورة الرمزية ${label}`}
+                          aria-pressed={active}
                           className="aspect-square rounded-full flex items-center justify-center transition-all"
                           style={{
                             background: active
